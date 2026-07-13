@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Digitalt karaktärsblad för Alvar Folke Musta i Drakar och Demoner.">
+  <title>Karaktärsblad — Alvar Musta</title>
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script defer src="assets/js/app.js"></script>
+  <script defer src="assets/js/character.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">AM</span>
+        <span><strong>Alvar Musta</strong><small>De flesta kallar honom Folke</small></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Öppna meny">Meny</button>
+      <nav class="site-nav" aria-label="Huvudmeny">
+        <a href="index.html">Översikt</a>
+        <a class="active" href="character.html">Karaktärsblad</a>
+        <a href="background.html">Bakgrund</a>
+        <a href="inventory.html">Inventory</a>
+        <a href="journal.html">Journal</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <header class="page-head">
+      <p class="eyebrow">Digitalt rollformulär</p>
+      <h1>Alvar Folke Musta</h1>
+      <p class="lead">Alla värden är redigerbara och sparas automatiskt på den här enheten.</p>
+      <div class="tools no-print">
+        <button class="btn btn-secondary" type="button" onclick="window.print()">Skriv ut sidan</button>
+        <a class="btn btn-ghost" href="assets/docs/Alvar-Folke-Musta-karaktarsblad.pdf">Originalblad som PDF</a>
+      </div>
+    </header>
+
+    <section class="section-tight">
+      <div id="attributes" class="stat-grid" aria-label="Grundegenskaper"></div>
+    </section>
+
+    <section class="section-tight">
+      <div class="grid grid-2">
+        <article class="card">
+          <p class="eyebrow">Grunduppgifter</p>
+          <div id="basics" class="form-grid"></div>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Härledda värden</p>
+          <div id="derived" class="form-grid"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-tight">
+      <div id="trackers" class="tracker-grid"></div>
+    </section>
+
+    <section class="section-tight">
+      <article class="card">
+        <p class="eyebrow">Tillstånd</p>
+        <h2>Hur mår Folke just nu?</h2>
+        <div id="conditions" class="conditions"></div>
+      </article>
+    </section>
+
+    <section class="section-tight">
+      <div class="grid grid-2">
+        <article>
+          <div class="page-head" style="padding-top:0">
+            <p class="eyebrow">Förmågor</p>
+            <h2>Hjälteförmågor och talanger</h2>
+          </div>
+          <div id="abilities" class="grid"></div>
+        </article>
+        <article>
+          <div class="page-head" style="padding-top:0">
+            <p class="eyebrow">Mentalism</p>
+            <h2>Trolleritrick</h2>
+          </div>
+          <div id="tricks" class="grid"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-tight">
+      <article class="card">
+        <div class="skill-toolbar">
+          <div>
+            <p class="eyebrow">Färdigheter</p>
+            <h2>Vad Alvar faktiskt kan</h2>
+          </div>
+          <label class="field search">
+            <span>Sök färdighet</span>
+            <input id="skill-search" type="search" placeholder="Exempel: Smyga eller Kniv">
+          </label>
+        </div>
+        <div class="grid grid-2">
+          <section>
+            <h3>Grundfärdigheter</h3>
+            <div id="general-skills" class="skill-list"></div>
+          </section>
+          <section>
+            <h3>Vapenfärdigheter</h3>
+            <div id="weapon-skills" class="skill-list"></div>
+            <h3 style="margin-top:1.5rem">Sekundära färdigheter</h3>
+            <div id="secondary-skills" class="skill-list"></div>
+          </section>
+        </div>
+      </article>
+    </section>
+
+    <section class="section-tight">
+      <article class="card">
+        <p class="eyebrow">Strid</p>
+        <h2>Vapen och egenskaper</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Vapen</th><th>Grepp</th><th>Räckvidd</th><th>Skada</th><th>Brytvärde</th><th>Egenskaper</th></tr>
+            </thead>
+            <tbody id="weapon-table"></tbody>
+          </table>
+        </div>
+        <div id="armor-fields" class="form-grid" style="margin-top:1rem"></div>
+      </article>
+    </section>
+
+    <section class="section-tight">
+      <div class="grid grid-2">
+        <article class="card sheet-preview">
+          <img src="assets/images/karaktarsblad.webp" alt="Förhandsvisning av Alvar Folke Mustas ursprungliga karaktärsblad">
+          <div class="sheet-actions">
+            <a class="btn btn-secondary" href="assets/docs/Alvar-Folke-Musta-karaktarsblad.pdf">Öppna hela PDF-bladet</a>
+          </div>
+        </article>
+        <article class="card">
+          <p class="eyebrow">Data</p>
+          <h2>Flytta mellan enheter</h2>
+          <p>Webbläsaren sparar automatiskt. Använd export för att ta med HP, inventory, färdighetsändringar och journal till en annan telefon eller dator.</p>
+          <div class="tools">
+            <button class="btn btn-secondary" type="button" data-export>Exportera data</button>
+            <label class="btn btn-ghost" for="import-character">Importera data</label>
+            <input id="import-character" type="file" accept="application/json,.json" data-import hidden>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>Alvar Folke Musta · karaktärsblad</span>
+      <a href="inventory.html">Gå till inventory →</a>
+    </div>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

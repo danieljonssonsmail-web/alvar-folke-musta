@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Karaktärssida och kampanjverktyg för Alvar Folke Musta i Drakar och Demoner.">
+  <title>Alvar Musta — känd som Folke</title>
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script defer src="assets/js/app.js"></script>
+  <script defer src="assets/js/home.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">AM</span>
+        <span><strong>Alvar Musta</strong><small>De flesta kallar honom Folke</small></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Öppna meny">Meny</button>
+      <nav class="site-nav" aria-label="Huvudmeny">
+        <a class="active" href="index.html">Översikt</a>
+        <a href="character.html">Karaktärsblad</a>
+        <a href="background.html">Bakgrund</a>
+        <a href="inventory.html">Inventory</a>
+        <a href="journal.html">Journal</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Drakar och Demoner · Kattfolk · Rififi</p>
+        <h1>Alvar Musta.<br>Känd som Folke.</h1>
+        <p class="lead">Nyfiken berättare, skicklig inbrottstjuv och möjligen magiker — även om han själv aldrig skulle uttrycka det så.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="character.html">Öppna karaktärsbladet</a>
+          <a class="btn btn-ghost" href="journal.html">Skriv i journalen</a>
+        </div>
+      </div>
+      <div class="hero-art">
+        <img src="assets/images/kattfolkstjuvar.webp" alt="Kattfolkstjuvar undersöker en skattkista i ett stenvalv">
+      </div>
+    </section>
+
+    <section class="quick-facts container">
+      <div class="grid grid-4">
+        <div class="card fact"><p class="eyebrow">Kroppspoäng</p><strong id="home-hp">16 / 16</strong><span>Följ skador under spel</span></div>
+        <div class="card fact"><p class="eyebrow">Viljepoäng</p><strong id="home-wp">16 / 16</strong><span>Förmågor och magi</span></div>
+        <div class="card fact"><p class="eyebrow">Packning</p><strong id="home-inventory">6 / 12</strong><span>Använda bärplatser</span></div>
+        <div class="card fact"><p class="eyebrow">Journal</p><strong id="home-journal">0</strong><span>Sparade anteckningar</span></div>
+      </div>
+    </section>
+
+    <section class="section container">
+      <div class="page-head">
+        <p class="eyebrow">Spelverktyg</p>
+        <h2>Allt om Alvar på ett ställe</h2>
+        <p class="lead">Alla ändringar sparas automatiskt i webbläsaren. Sajten fungerar utan konto, databas eller serverkod.</p>
+      </div>
+      <div class="grid grid-2">
+        <a class="card link-card" href="character.html">
+          <p class="eyebrow">01</p>
+          <h2>Karaktärsblad</h2>
+          <p>Grundegenskaper, färdigheter, förmågor, magi, vapen, rustning, tillstånd och resurser.</p>
+          <span class="arrow">Öppna →</span>
+        </a>
+        <a class="card link-card" href="background.html">
+          <p class="eyebrow">02</p>
+          <h2>Bakgrund</h2>
+          <p>Tricilve, familjen Musta, arbetet hos Rosenmark och varför han plötsligt började kalla sig Folke.</p>
+          <span class="arrow">Läs →</span>
+        </a>
+        <a class="card link-card" href="inventory.html">
+          <p class="eyebrow">03</p>
+          <h2>Inventory</h2>
+          <p>Lägg till, ändra och ta bort föremål. Håll koll på antal, bärplatser, pengar och vad som är buret.</p>
+          <span class="arrow">Hantera →</span>
+        </a>
+        <a class="card link-card" href="journal.html">
+          <p class="eyebrow">04</p>
+          <h2>Journal</h2>
+          <p>Skriv daterade kampanjanteckningar med plats, etiketter och fria reflektioner från vägarna.</p>
+          <span class="arrow">Skriv →</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="section section-dark">
+      <div class="container grid grid-2">
+        <div>
+          <p class="eyebrow">Den första lögnen</p>
+          <h2>”Öh… Folke.”</h2>
+          <p class="lead">Som om han själv inte riktigt vet varför just det namnet kom ut först.</p>
+        </div>
+        <div class="card card-flat">
+          <h3>Säkerhetskopia</h3>
+          <p>Exportera all data till en JSON-fil. Den kan senare importeras igen, även på en annan dator eller telefon.</p>
+          <div class="tools">
+            <button class="btn btn-secondary" type="button" data-export>Exportera data</button>
+            <label class="btn btn-ghost" for="import-home">Importera data</label>
+            <input id="import-home" type="file" accept="application/json,.json" data-import hidden>
+            <button class="btn btn-danger" type="button" data-reset>Återställ allt</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>Alvar Folke Musta · privat kampanjverktyg</span>
+      <a href="assets/docs/Alvar-Folke-Musta-karaktarsblad.pdf">Öppna originalbladet som PDF</a>
+    </div>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

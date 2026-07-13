@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Inventory och utrustning för Alvar Folke Musta.">
+  <title>Inventory — Alvar Musta</title>
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script defer src="assets/js/app.js"></script>
+  <script defer src="assets/js/inventory.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">AM</span>
+        <span><strong>Alvar Musta</strong><small>De flesta kallar honom Folke</small></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Öppna meny">Meny</button>
+      <nav class="site-nav" aria-label="Huvudmeny">
+        <a href="index.html">Översikt</a>
+        <a href="character.html">Karaktärsblad</a>
+        <a href="background.html">Bakgrund</a>
+        <a class="active" href="inventory.html">Inventory</a>
+        <a href="journal.html">Journal</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <header class="page-head">
+      <p class="eyebrow">Packning och rikedom</p>
+      <h1>Inventory</h1>
+      <p class="lead">Det mesta här har Alvar skaffat på ett helt hederligt sätt. Resten har säkert en rimlig förklaring.</p>
+    </header>
+
+    <section class="section-tight">
+      <div class="grid grid-3">
+        <article class="card">
+          <p class="eyebrow">Bärförmåga</p>
+          <div id="capacity-summary" class="capacity-summary"><strong>6 / 12</strong><span>använda bärplatser</span></div>
+          <div class="capacity-track" role="progressbar" aria-label="Använd bärförmåga" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+            <div id="capacity-bar" class="capacity-bar"></div>
+          </div>
+          <div id="inventory-settings" class="form-grid" style="margin-top:1rem"></div>
+        </article>
+
+        <article class="card">
+          <p class="eyebrow">Mynt</p>
+          <h2>Pengar</h2>
+          <div id="coins" class="coin-grid"></div>
+        </article>
+
+        <article class="card">
+          <p class="eyebrow">Säkerhetskopia</p>
+          <h2>Ta med inventoryt</h2>
+          <p class="small muted">Exporten innehåller även karaktärsblad och journal.</p>
+          <div class="tools">
+            <button class="btn btn-secondary" type="button" data-export>Exportera</button>
+            <label class="btn btn-ghost" for="import-inventory">Importera</label>
+            <input id="import-inventory" type="file" accept="application/json,.json" data-import hidden>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-tight">
+      <article class="card">
+        <p class="eyebrow">Lägg till föremål</p>
+        <h2>Något nytt i packningen</h2>
+        <form id="add-item-form" class="form-grid">
+          <label class="field full"><span>Föremål</span><input name="name" type="text" required placeholder="Exempel: Märklig nyckel av svart järn"></label>
+          <label class="field"><span>Antal</span><input name="quantity" type="number" min="1" max="999" value="1" required></label>
+          <label class="field"><span>Kategori</span><input name="category" type="text" placeholder="Verktyg, skatt, småsak..."></label>
+          <label class="field"><span>Bärplatser per styck</span><input name="slots" type="number" min="0" max="99" step="0.5" value="1"></label>
+          <label class="condition" style="align-self:end"><input name="worn" type="checkbox"><span>Buret eller påtaget</span></label>
+          <label class="field full"><span>Anteckning</span><input name="notes" type="text" placeholder="Var hittades det? Vem äger det egentligen?"></label>
+          <div class="full"><button class="btn btn-secondary" type="submit">Lägg till i inventory</button></div>
+        </form>
+      </article>
+    </section>
+
+    <section class="section-tight">
+      <article class="card">
+        <p class="eyebrow">Packning</p>
+        <h2>Allt Alvar bär med sig</h2>
+        <p class="small muted">Ändra direkt i tabellen. Varje ändring sparas automatiskt.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Föremål</th><th>Antal</th><th>Kategori</th><th>Platser/st</th><th>Buret</th><th>Anteckning</th><th>Totalt</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="inventory-table"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>Alvar Folke Musta · inventory</span>
+      <a href="journal.html">Gå vidare till journalen →</a>
+    </div>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
