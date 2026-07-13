@@ -1,68 +1,73 @@
 # Äventyrargruppen – Drakar och Demoner
 
-En färdig statisk GitHub Pages-sajt för en spelgrupp i *Drakar och Demoner*. Framsidan byggs automatiskt upp av gruppens karaktärer. **Alvar Folke Musta** är gruppens första karaktär och har ett fullständigt digitalt formulär.
+En statisk GitHub Pages-sajt för gruppens karaktärer. Version 7 gör Alvar/Folke och alla medspelarkaraktärer till likvärdiga karaktärer i samma portal.
 
-## Innehåll
+## Det som finns
 
-- gemensam framsida med ett kort för varje karaktär
-- direktlänkar vidare till varje spelares egen karaktärssida
-- Alvars fullständiga digitala karaktärsblad, bakgrund, inventory och journal
-- gruppsida där fler karaktärer, porträtt, bakgrunder, rustningar och PDF-formulär kan läggas till
-- import och export av karaktärspaket
-- valbar rustning och hjälm med automatiskt skyddsvärde och regler
-- privata och offentliga tärningsslag för färdigheter, vapen, skada och valfria tärningar
-- erfarenhetsruta framför varje färdighet
-- gemensamt initiativbord med kort 1–10, avvakta/byte och vändbara kort
-- automatisk lagring i webbläsaren
-- responsiv layout för dator och mobil
+- Gemensam framsida med ett kort för varje karaktär.
+- En komplett karaktärssida per person med flikarna:
+  - Översikt
+  - Karaktärsblad
+  - Bakgrund
+  - Inventory
+  - Journal
+- Privata och offentliga tärningsslag.
+- Slag för färdigheter, vapenattacker, vapenskada och valfria tärningar.
+- Erfarenhetsruta framför varje färdighet.
+- Redigerbara grundegenskaper, resurser, tillstånd, färdigheter, vapen, förmågor och trick.
+- Rustning, hjälm, skyddsvärde och rustningsregler.
+- Uppladdning av porträtt och originalblad som PDF eller bild.
+- Gemensamt initiativbord med initiativkort 1–10.
+- Export och import av kompletta karaktärspaket.
 
-## Publicera på GitHub Pages
+## Viktigt om lagringen
 
-1. Lägg filerna i repositoryt.
-2. Gör en commit i GitHub Desktop.
-3. Klicka **Push origin**.
-4. GitHub Pages uppdateras automatiskt efter någon minut.
+GitHub Pages är en statisk webbplats. Uppgifter sparas därför lokalt i webbläsaren på den enhet där de skrivs in.
 
-Vid en helt ny publicering: **Settings → Pages → Deploy from a branch → main → /(root)**.
+Ett karaktärspaket innehåller just den karaktärens:
 
-## Så fungerar gruppens framsida
+- digitala spelvärden
+- bakgrund och anteckningar
+- inventory och pengar
+- journal
+- uppladdat porträtt
+- uppladdat karaktärsblad
 
-`index.html` läser automatiskt Alvars sparade uppgifter och alla karaktärer som skapats eller importerats på `party.html`. När en ny karaktär läggs till visas den på framsidan nästa gång sidan öppnas.
+Spelaren kan exportera paketet från sin egen karaktärssida och skicka JSON-filen till de andra, som importerar den på sidan **Karaktärerna**.
 
-- Alvars kort leder till hans fullständiga digitala formulär.
-- Övriga kort leder till den karaktärens egen flik på gruppsidan.
-- Länken **Lägg till en karaktär** öppnar formuläret direkt.
+Offentliga tärningsslag och initiativ använder gruppkoden och en extern MQTT-anslutning. Privata slag sparas endast lokalt för den aktuella karaktären.
 
-## Tärningar och initiativ
+## Uppdatera GitHub-repositoryt
 
-På varje digital karaktärssida finns ett tärningsbord. Privata slag sparas bara i den aktuella webbläsaren och visas bara i den karaktärens privata logg. Offentliga slag och initiativbordet delas i realtid mellan enheter som använder samma gruppkod.
+1. Packa upp uppdateringsfilen.
+2. Öppna repositoryt i GitHub Desktop.
+3. Välj **Repository → Show in Explorer**.
+4. Kopiera innehållet från uppdateringsmappen till repositorymappen.
+5. Välj **Ersätt filer**.
+6. Skriv exempelvis `Kompletta karaktärssidor för hela gruppen`.
+7. Klicka **Commit to main**.
+8. Klicka **Push origin**.
 
-Den gemensamma synken använder en publik MQTT-förmedlare. Gruppkoden fungerar som rummets nyckel, så använd en lång och svårgissad kod och dela den bara med spelgruppen. Om nätanslutningen saknas fortsätter privata slag och initiativ att fungera lokalt.
+Befintliga lokala uppgifter migreras automatiskt. Alvars tidigare inventory och journal ligger kvar, och tidigare importerade medspelarkaraktärer får egna tomma eller importerade inventory- och journalsidor.
 
-## Sparade data
-
-Textuppgifter sparas lokalt i webbläsarens `localStorage`. Uppladdade porträtt och karaktärsblad sparas i webbläsarens `IndexedDB`. De skrivs inte automatiskt tillbaka till GitHub.
-
-Använd **Exportera karaktärspaket** för att flytta en medspelares karaktär mellan enheter. Alvars fullständiga data kan säkerhetskopieras med **Exportera data**.
-
-## Bilder och privat bruk
-
-Illustrationen och kartan i `assets/images` är hämtade ur uppladdat spelmaterial. Kontrollera utgivarens villkor innan repositoryt eller sajten görs offentlig. För offentligt bruk bör bilderna ersättas med egna eller licensierade bilder.
-
-## Filstruktur
+## Filer
 
 ```text
-index.html              Gruppens gemensamma framsida
-character.html          Alvars fullständiga karaktärsblad
-background.html         Alvars bakgrund
-inventory.html          Alvars inventory
-journal.html            Alvars journal
-party.html              Fler karaktärer, import och redigering
+index.html              Gruppens framsida
+party.html              Alla kompletta karaktärssidor och import
 initiative.html         Gemensamt initiativbord
-assets/css/styles.css   Formgivning
-assets/js/home.js       Bygger gruppens framsida
-assets/js/party.js      Gruppens karaktärsflikar
-assets/js/dice.js       Privata och offentliga tärningsslag
-assets/js/initiative.js Gemensamt initiativ och synk
-assets/js/app.js        Gemensam lagring och rustningsregler
+character.html          Vidarebefordrar till Alvars karaktärsblad
+background.html         Vidarebefordrar till Alvars bakgrund
+inventory.html          Vidarebefordrar till Alvars inventory
+journal.html            Vidarebefordrar till Alvars journal
+assets/js/app.js        Data, migrering och gemensamma funktioner
+assets/js/party.js      Karaktärsportalens funktioner
+assets/js/dice.js       Tärningsslag och offentlig logg
+assets/js/initiative.js Initiativkort
+assets/js/home.js       Gruppens framsida
+assets/css/styles.css   Utseende och mobilanpassning
 ```
+
+## Upphovsrätt
+
+Illustrationer och karta från spelmaterial bör endast publiceras enligt utgivarens villkor. För en helt offentlig sida är egna eller licensierade bilder säkrast.

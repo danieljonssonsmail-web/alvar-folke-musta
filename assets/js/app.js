@@ -20,8 +20,10 @@
     }
   };
 
+  const ALVAR_BACKGROUND = "De flesta som möter honom idag känner honom som Folke.\n\nVarför han använder det namnet varierar beroende på vem som frågar.\n\nAlvar Musta växte upp i Tricilve, en hamnstad där skepp från hela världen lade till och där historier, språk och människor blandades lika naturligt som doften av tjära och hav.\n\nHans far, Hjalmar Musta, arbetade nere i hamnen med handel, transporter och allehanda uppdrag som behövde utföras. Hans mor, Elina Musta, var sömmerska med många återkommande kunder bland stadens köpmän och sjöfolk. Familjen var inte rik, men de klarade sig bra. Alvar växte upp tillsammans med sina syskon Matilda, Oskar och Signe i ett hem där det sällan var tyst och där det alltid fanns människor omkring honom.\n\nRedan som ung visade han en ovanlig nyfikenhet. Han ville veta vad som fanns bakom stängda dörrar, vart gränderna ledde och varför människor gjorde som de gjorde. Nyfikenheten ledde honom ibland till problem, men oftare till nya kunskaper.\n\nSom tonåring fick han arbete hos köpmannen Edvard Rosenmark i stadens finare kvarter. Där lärde han sig läsa och skriva bättre, föra enklare bokföring och röra sig bland människor med betydligt mer pengar än han själv. Han upptäckte snart att rika människor ofta var minst lika märkliga som alla andra.\n\nArbetet förde honom i kontakt med många olika människor. Sjömän, köpmän, kaptener, budbärare och äventyrare. Han började ta mindre extrauppdrag vid sidan av arbetet. Leverera brev, leta upp personer, hämta föremål eller ta reda på information. Han märkte att han hade talang för sådant. Han rörde sig obemärkt, såg detaljer andra missade och hade lätt för att prata med folk.\n\nSamtidigt började märkliga saker hända. Föremål verkade ibland röra sig dit han ville ha dem. Han kunde känna när något magiskt fanns i närheten. Ett fall från ett tak slutade betydligt bättre än det borde ha gjort. Alvar har aldrig betraktat sig som magiker, men han är medveten om att något finns där.\n\nFör ungefär ett halvår sedan lämnade han Tricilve. Inte på flykt. Inte för att han var efterlyst eller sökt av vakter. Han ville helt enkelt se världen. Hamnen hade fyllt hans huvud med berättelser om främmande länder och märkliga platser under hela hans uppväxt. Till slut blev nyfikenheten större än bekvämligheten.\n\nResandet har dock visat sig vara betydligt mindre glamoröst än historierna hemma på värdshusen. Pengarna har tagit slut snabbare än väntat och arbetena har varit färre än han hoppats på.\n\nNär kampanjen börjar har han därför varit på vägarna en längre tid än planerat. Han är lite sliten, lite fattigare och betydligt mer försiktig än när han lämnade hemmet.\n\nNär den halvängdsnasare som samlat gruppen söker folk till ett uppdrag tackar han ja.\n\nNär någon frågar vad han heter blir det en kort paus.\n\n\"Öh... Folke.\"\n\nSom om han själv inte riktigt vet varför just det namnet kom ut först.\n\nMen om gruppen ger honom några dagar kommer den riktiga Alvar fram. En nyfiken berättare med glimten i ögat. En ung man som gärna lyssnar på historier, gärna tjänar några silver och nästan aldrig kan motstå frestelsen att undersöka en dörr som någon uttryckligen sagt åt honom att låta bli.";
+
   const defaultState = {
-    version: 6,
+    version: 7,
     character: {
       name: 'Alvar Folke Musta',
       knownAs: 'Folke',
@@ -31,6 +33,8 @@
       profession: 'Rififi',
       archetype: 'Våghalsen',
       weakness: 'Kleptoman',
+      background: ALVAR_BACKGROUND,
+      notes: 'Familj: Hjalmar och Elina Musta samt syskonen Matilda, Oskar och Signe. Tidigare arbetsgivare: köpmannen Edvard Rosenmark.',
       attributes: {
         styrka: 14,
         fysik: 16,
@@ -274,11 +278,50 @@
     return character;
   }
 
+  function normalizeInventory(rawInventory) {
+    const source = rawInventory && typeof rawInventory === 'object' ? rawInventory : {};
+    const coins = source.coins && typeof source.coins === 'object' ? source.coins : {};
+    return {
+      capacity: clamp(source.capacity ?? 10, 0, 99),
+      backpackBonus: clamp(source.backpackBonus ?? 2, 0, 99),
+      coins: {
+        gold: clamp(coins.gold, 0, 99999),
+        silver: clamp(coins.silver, 0, 99999),
+        copper: clamp(coins.copper, 0, 99999)
+      },
+      items: (Array.isArray(source.items) ? source.items : []).map((item) => ({
+        id: String(item?.id || makeId('item')),
+        name: String(item?.name || ''),
+        quantity: clamp(item?.quantity ?? 1, 1, 999),
+        category: String(item?.category || ''),
+        slots: Math.max(0, Number(item?.slots) || 0),
+        worn: Boolean(item?.worn),
+        notes: String(item?.notes || '')
+      }))
+    };
+  }
+
+  function normalizeJournal(rawJournal) {
+    return (Array.isArray(rawJournal) ? rawJournal : []).map((entry) => ({
+      id: String(entry?.id || makeId('journal')),
+      title: String(entry?.title || ''),
+      date: String(entry?.date || ''),
+      location: String(entry?.location || ''),
+      tags: String(entry?.tags || ''),
+      body: String(entry?.body || ''),
+      updatedAt: Number(entry?.updatedAt) || Date.now()
+    }));
+  }
+
   function normalizeState(nextState) {
     if (!nextState || typeof nextState !== 'object') return nextState;
     if (!nextState.character || typeof nextState.character !== 'object') nextState.character = {};
     nextState.character.armor = normalizeArmor(nextState.character.armor);
+    nextState.character.background = nextState.character.background == null ? ALVAR_BACKGROUND : String(nextState.character.background);
+    nextState.character.notes = nextState.character.notes == null ? '' : String(nextState.character.notes);
     normalizeCharacterValues(nextState.character);
+    nextState.inventory = normalizeInventory(nextState.inventory);
+    nextState.journal = normalizeJournal(nextState.journal);
 
     if (!nextState.party || typeof nextState.party !== 'object') nextState.party = { characters: [] };
     if (!Array.isArray(nextState.party.characters)) nextState.party.characters = [];
@@ -286,11 +329,14 @@
       if (!character || typeof character !== 'object') return;
       const sourceArmor = character.armor || character.sourceCharacter?.armor;
       character.armor = normalizeArmor(sourceArmor);
+      character.background = character.background == null ? String(character.sourceCharacter?.background || '') : String(character.background);
+      character.notes = character.notes == null ? String(character.sourceCharacter?.notes || '') : String(character.notes);
+      character.inventory = normalizeInventory(character.inventory || character.sourceInventory);
+      character.journal = normalizeJournal(character.journal || character.sourceJournal);
+      normalizeCharacterValues(character);
       if (character.sourceCharacter && typeof character.sourceCharacter === 'object') {
         character.sourceCharacter.armor = normalizeArmor(character.sourceCharacter.armor || character.armor);
         normalizeCharacterValues(character.sourceCharacter);
-      } else {
-        normalizeCharacterValues(character);
       }
     });
 
@@ -329,7 +375,7 @@
     nextState.initiative.updatedAt = Number(nextState.initiative.updatedAt) || 0;
     nextState.initiative.changeId = String(nextState.initiative.changeId || '');
 
-    nextState.version = Math.max(Number(nextState.version) || 0, 6);
+    nextState.version = Math.max(Number(nextState.version) || 0, 7);
     return nextState;
   }
 
@@ -457,6 +503,8 @@
     normalizeSkillList,
     normalizeWeaponList,
     normalizeCharacterValues,
+    normalizeInventory,
+    normalizeJournal,
     defaultState: clone(defaultState)
   };
 

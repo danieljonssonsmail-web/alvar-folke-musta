@@ -3,73 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Kampanjjournal för Alvar Folke Musta.">
+  <meta http-equiv="refresh" content="0; url=party.html#alvar/journal">
   <title>Journal — Alvar Musta</title>
   <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/styles.css">
-  <script defer src="assets/js/app.js"></script>
-  <script defer src="assets/js/journal.js"></script>
+  <script>location.replace('party.html#alvar/journal');</script>
 </head>
 <body>
-  <header class="site-header">
-    <div class="header-inner">
-      <a class="brand" href="index.html">
-        <span class="brand-mark">AM</span>
-        <span><strong>Alvar Musta</strong><small>Känd som Folke · en av gruppen</small></span>
-      </a>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Öppna meny">Meny</button>
-      <nav class="site-nav" aria-label="Huvudmeny">
-        <a href="index.html">Gruppens framsida</a>
-        <a href="initiative.html">Initiativ</a>
-        <a href="character.html">Karaktärsblad</a>
-        <a href="background.html">Bakgrund</a>
-        <a href="inventory.html">Inventory</a>
-        <a href="party.html">Hantera gruppen</a>
-        <a class="active" href="journal.html">Journal</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="container">
-    <header class="page-head">
-      <p class="eyebrow">Från vägarna</p>
-      <h1>Journal</h1>
-      <p class="lead">Berättelserna Alvar hörde i Tricilves hamn var alltid tydligare i efterhand. Här kan han försöka göra sina egna lika övertygande.</p>
-      <div class="tools no-print">
-        <button class="btn btn-secondary" type="button" onclick="window.print()">Skriv ut journalen</button>
-        <button class="btn btn-ghost" type="button" data-export>Exportera all data</button>
-      </div>
-    </header>
-
-    <section class="section-tight journal-compose no-print">
-      <article class="card">
-        <p class="eyebrow">Ny anteckning</p>
-        <h2>Vad hände?</h2>
-        <form id="journal-form" class="form-grid">
-          <label class="field"><span>Rubrik</span><input name="title" type="text" required placeholder="Exempel: Nasaren och den låsta dörren"></label>
-          <label class="field"><span>Datum</span><input name="date" type="date"></label>
-          <label class="field"><span>Plats</span><input name="location" type="text" placeholder="Värdshus, ruin, stad..."></label>
-          <label class="field"><span>Etiketter</span><input name="tags" type="text" placeholder="uppdrag, ledtråd, person — separera med komma"></label>
-          <label class="field full"><span>Anteckning</span><textarea name="body" required placeholder="Skriv vad gruppen gjorde, vad Folke upptäckte och vad som fortfarande verkar misstänkt..."></textarea></label>
-          <div class="full tools">
-            <button id="journal-submit" class="btn btn-secondary" type="submit">Spara anteckning</button>
-            <button id="journal-cancel" class="btn btn-ghost" type="button" hidden>Avbryt redigering</button>
-          </div>
-        </form>
-      </article>
-    </section>
-
-    <section class="section-tight">
-      <div id="journal-list" class="journal-list"></div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <span>Alvar Folke Musta · kampanjjournal</span>
-      <a href="index.html">Tillbaka till översikten →</a>
-    </div>
-  </footer>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <main class="container"><section class="section"><article class="card"><p class="eyebrow">Karaktärsportalen</p><h1>Journal</h1><p>Den här delen har flyttat till Alvars kompletta karaktärssida.</p><a class="btn btn-secondary" href="party.html#alvar/journal">Öppna journal</a></article></section></main>
 </body>
 </html>

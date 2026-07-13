@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Medspelarnas karaktärer, bakgrunder och karaktärsblad för Drakar och Demoner.">
-  <title>Hantera gruppen — Drakar och Demoner</title>
+  <meta name="description" content="Kompletta karaktärssidor för hela gruppen i Drakar och Demoner.">
+  <title>Gruppens karaktärer — Drakar och Demoner</title>
   <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/styles.css">
   <script defer src="assets/js/app.js"></script>
@@ -24,23 +24,23 @@
         <a href="index.html">Gruppen</a>
         <a href="initiative.html">Initiativ</a>
         <a href="party.html#new">Lägg till karaktär</a>
-        <a class="active" href="party.html">Hantera gruppen</a>
-        <a href="character.html">Alvar / Folke</a>
+        <a class="active" href="party.html">Karaktärerna</a>
+        <a href="party.html#alvar/overview">Alvar / Folke</a>
       </nav>
     </div>
   </header>
 
   <main class="container">
     <header class="page-head">
-      <p class="eyebrow">Gruppverktyg</p>
-      <h1>Hantera karaktärerna</h1>
-      <p class="lead">Lägg till gruppens bakgrunder och ladda upp karaktärsblad som PDF eller bild. Alvar finns med som gruppens första karaktär och varje ny karaktär får en egen flik.</p>
+      <p class="eyebrow">Gruppens karaktärsportal</p>
+      <h1>Alla karaktärer, hela vägen</h1>
+      <p class="lead">Välj en karaktär och öppna översikt, karaktärsblad, bakgrund, inventory eller journal. Varje del sparas separat för just den karaktären.</p>
     </header>
 
     <section class="section-tight">
       <article class="notice-card">
-        <strong>Filerna sparas bara i den här webbläsaren.</strong>
-        <span>GitHub Pages kan inte skriva tillbaka till repositoryt. Exportera ett karaktärspaket för att flytta en flik till en annan dator eller telefon.</span>
+        <strong>Varje karaktär har nu ett eget komplett paket.</strong>
+        <span>Bakgrund, inventory, journal, spelvärden, erfarenhetsmarkeringar och uppladdade filer hör ihop med vald karaktär. Exportera paketet för att flytta allt till en annan enhet.</span>
       </article>
     </section>
 
@@ -57,8 +57,8 @@
 
     <section id="party-empty" class="section-tight" hidden>
       <div class="empty-state">
-        <h2>Ännu är Alvar ensam här</h2>
-        <p>Lägg till den första medspelaren eller importera ett karaktärspaket.</p>
+        <h2>Gruppen väntar på nästa äventyrare</h2>
+        <p>Lägg till en medspelare eller importera ett komplett karaktärspaket.</p>
         <button class="btn btn-secondary" type="button" data-open-editor>Skapa första karaktärsfliken</button>
       </div>
     </section>
@@ -67,7 +67,7 @@
       <article class="card">
         <p class="eyebrow" id="party-editor-eyebrow">Ny medspelare</p>
         <h2 id="party-editor-title">Skapa en karaktärsflik</h2>
-        <p class="small muted">Karaktärsbladet bifogas och visas i fliken. Fälten i PDF-filen läses inte automatiskt.</p>
+        <p class="small muted">PDF eller bild kan bifogas som originalblad. Digitala värden, bakgrund, inventory och journal redigeras därefter på karaktärens egna flikar.</p>
         <form id="party-form" class="form-grid" autocomplete="off">
           <input name="id" type="hidden">
           <label class="field"><span>Karaktärens namn</span><input name="name" type="text" required placeholder="Exempel: Yrsa Gråsten"></label>
