@@ -8,6 +8,8 @@
   <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/styles.css">
   <script defer src="assets/js/app.js"></script>
+  <script defer src="https://unpkg.com/mqtt@5.15.1/dist/mqtt.min.js"></script>
+  <script defer src="assets/js/dice.js"></script>
   <script defer src="assets/js/character.js"></script>
 </head>
 <body>
@@ -15,15 +17,16 @@
     <div class="header-inner">
       <a class="brand" href="index.html">
         <span class="brand-mark">AM</span>
-        <span><strong>Alvar Musta</strong><small>De flesta kallar honom Folke</small></span>
+        <span><strong>Alvar Musta</strong><small>Känd som Folke · en av gruppen</small></span>
       </a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Öppna meny">Meny</button>
       <nav class="site-nav" aria-label="Huvudmeny">
-        <a href="index.html">Översikt</a>
+        <a href="index.html">Gruppens framsida</a>
+        <a href="initiative.html">Initiativ</a>
         <a class="active" href="character.html">Karaktärsblad</a>
         <a href="background.html">Bakgrund</a>
         <a href="inventory.html">Inventory</a>
-        <a href="party.html">Gruppen</a>
+        <a href="party.html">Hantera gruppen</a>
         <a href="journal.html">Journal</a>
       </nav>
     </div>
@@ -70,6 +73,10 @@
     </section>
 
     <section class="section-tight">
+      <div id="dice-panel"></div>
+    </section>
+
+    <section class="section-tight">
       <div class="grid grid-2">
         <article>
           <div class="page-head" style="padding-top:0">
@@ -95,10 +102,13 @@
             <p class="eyebrow">Färdigheter</p>
             <h2>Vad Alvar faktiskt kan</h2>
           </div>
-          <label class="field search">
-            <span>Sök färdighet</span>
-            <input id="skill-search" type="search" placeholder="Exempel: Smyga eller Kniv">
-          </label>
+          <div class="skill-toolbar-tools">
+            <p id="experience-summary" class="experience-summary">Ingen färdighet markerad ännu</p>
+            <label class="field search">
+              <span>Sök färdighet</span>
+              <input id="skill-search" type="search" placeholder="Exempel: Smyga eller Kniv">
+            </label>
+          </div>
         </div>
         <div class="grid grid-2">
           <section>
@@ -122,7 +132,7 @@
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Vapen</th><th>Grepp</th><th>Räckvidd</th><th>Skada</th><th>Brytvärde</th><th>Egenskaper</th></tr>
+              <tr><th>Vapen</th><th>Färdighet</th><th>Grepp</th><th>Räckvidd</th><th>Skada</th><th>Brytvärde</th><th>Egenskaper</th><th>Slå</th><th>Skada</th></tr>
             </thead>
             <tbody id="weapon-table"></tbody>
           </table>

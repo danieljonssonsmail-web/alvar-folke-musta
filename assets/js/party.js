@@ -6,6 +6,7 @@
   const STORE_NAME = 'files';
   let activeId = null;
   let currentObjectUrls = [];
+  let diceController = null;
 
   function partyState() {
     const state = app.getState();
@@ -111,6 +112,31 @@
     return character.name || 'Namnlös';
   }
 
+  function valueSource(character) {
+    const source = character.sourceCharacter && typeof character.sourceCharacter === 'object'
+      ? character.sourceCharacter
+      : character;
+    app.normalizeCharacterValues(source);
+    return source;
+  }
+
+  function skillGroups(source) {
+    return [
+      ['skills', 'Grundfärdigheter'],
+      ['weaponSkills', 'Vapenfärdigheter'],
+      ['secondarySkills', 'Sekundära färdigheter']
+    ];
+  }
+
+  function findSkillValue(source, name) {
+    const normalized = String(name || '').trim().toLowerCase();
+    const all = [...source.weaponSkills, ...source.skills, ...source.secondarySkills];
+    const exact = all.find((skill) => skill.name.toLowerCase() === normalized);
+    if (exact) return exact.value;
+    const partial = all.find((skill) => normalized && (skill.name.toLowerCase().includes(normalized) || normalized.includes(skill.name.toLowerCase())));
+    return partial ? partial.value : null;
+  }
+
   function armorOptions(kind, selected) {
     return Object.keys(app.armorCatalog[kind]).map((name) => `
       <option value="${app.escapeHtml(name)}" ${name === selected ? 'selected' : ''}>${app.escapeHtml(name)}</option>
@@ -195,8 +221,12 @@
 
   function renderTabs() {
     const characters = partyState().characters;
+    const alvar = app.getState().character || {};
     const tabs = document.getElementById('party-tabs');
-    tabs.innerHTML = characters.map((character) => `
+    const alvarLabel = characterLabel(alvar);
+    tabs.innerHTML = `
+      <a class="party-tab party-tab-link" href="character.html" role="tab" aria-selected="false">${app.escapeHtml(alvarLabel)}</a>
+    ` + characters.map((character) => `
       <button class="party-tab ${character.id === activeId ? 'active' : ''}" type="button" role="tab" aria-selected="${character.id === activeId}" data-party-tab="${character.id}">
         ${app.escapeHtml(characterLabel(character))}
       </button>
@@ -217,6 +247,7 @@
 
   function openEditor(character = null) {
     hidePanels();
+    if (!character) history.replaceState(null, '', '#new');
     clearObjectUrls();
     const form = document.getElementById('party-form');
     form.reset();
@@ -237,28 +268,75 @@
     form.elements.name.focus();
   }
 
-  async function renderImportedValues(character) {
-    const imported = character.sourceCharacter;
-    if (!imported || typeof imported !== 'object') return '';
-    const attributes = imported.attributes && typeof imported.attributes === 'object'
-      ? Object.entries(imported.attributes).map(([key, value]) => `<div class="mini-stat"><span>${app.escapeHtml(key)}</span><strong>${app.escapeHtml(value)}</strong></div>`).join('')
+  function partySkillRows(list, section) {
+    if (!list.length) return '<p class="dice-empty">Inga färdigheter inlagda.</p>';
+    return list.map((skill, index) => `
+      <div class="skill-row party-skill-row" data-party-skill-row>
+        <label class="skill-xp-check" title="Erfarenhet: färdigheten får försöka höjas efter spelmötet">
+          <input type="checkbox" ${skill.experience ? 'checked' : ''} data-party-skill-experience="${section}" data-party-skill-index="${index}" aria-label="Erfarenhet för ${app.escapeHtml(skill.name)}">
+          <span aria-hidden="true">✓</span>
+        </label>
+        <span class="skill-name">${app.escapeHtml(skill.name)} ${skill.attr ? `<small>(${app.escapeHtml(skill.attr)})</small>` : ''}</span>
+        <input class="skill-value" type="number" min="0" max="30" value="${skill.value}" data-party-skill-value="${section}" data-party-skill-index="${index}" aria-label="Värde för ${app.escapeHtml(skill.name)}">
+        <button class="btn btn-small btn-ghost skill-roll-button" type="button" data-party-roll-skill="${section}" data-party-skill-index="${index}">Slå</button>
+      </div>
+    `).join('');
+  }
+
+  function renderImportedValues(character) {
+    const source = valueSource(character);
+    const attributes = source.attributes && typeof source.attributes === 'object'
+      ? Object.entries(source.attributes).map(([key, value]) => `<div class="mini-stat"><span>${app.escapeHtml(key)}</span><strong>${app.escapeHtml(value)}</strong></div>`).join('')
       : '';
-    const skills = Array.isArray(imported.skills)
-      ? [...imported.skills].sort((a, b) => Number(b.value || 0) - Number(a.value || 0)).slice(0, 10)
-        .map((skill) => `<li><span>${app.escapeHtml(skill.name || '')}</span><strong>${app.escapeHtml(skill.value ?? '')}</strong></li>`).join('')
-      : '';
-    if (!attributes && !skills) return '';
+    const marked = [...source.skills, ...source.weaponSkills, ...source.secondarySkills].filter((skill) => skill.experience).length;
+    const skillSections = skillGroups(source).map(([section, label]) => `
+      <section>
+        <h3>${label}</h3>
+        <div class="skill-list party-digital-skill-list">${partySkillRows(source[section], section)}</div>
+      </section>
+    `).join('');
+    const weapons = source.weapons.length ? `
+      <div class="table-wrap party-weapon-table-wrap">
+        <table class="party-weapon-table">
+          <thead><tr><th>Vapen</th><th>Färdighet</th><th>Skada</th><th>Attack</th><th>Skada</th></tr></thead>
+          <tbody>${source.weapons.map((weapon, index) => `
+            <tr>
+              <td><input type="text" value="${app.escapeHtml(weapon.name)}" data-party-weapon-field="name" data-party-weapon-index="${index}"></td>
+              <td><input type="text" value="${app.escapeHtml(weapon.skill || '')}" data-party-weapon-field="skill" data-party-weapon-index="${index}"></td>
+              <td><input type="text" value="${app.escapeHtml(weapon.damage || '')}" data-party-weapon-field="damage" data-party-weapon-index="${index}"></td>
+              <td><button class="btn btn-small btn-ghost" type="button" data-party-roll-attack="${index}">Slå</button></td>
+              <td><button class="btn btn-small btn-secondary" type="button" data-party-roll-damage="${index}">Slå</button></td>
+            </tr>
+          `).join('')}</tbody>
+        </table>
+      </div>
+    ` : '<p class="dice-empty">Inga digitala vapen inlagda.</p>';
+
     return `
-      <article class="card">
-        <p class="eyebrow">Importerade spelvärden</p>
+      <article class="card party-values-card">
+        <div class="skill-toolbar">
+          <div>
+            <p class="eyebrow">Spelvärden</p>
+            <h2>Färdigheter, erfarenhet och vapen</h2>
+            <p class="experience-summary">${marked ? `${marked} markerade för höjning` : 'Ingen färdighet markerad ännu'}</p>
+          </div>
+          <div class="tools no-print">
+            <button class="btn btn-small btn-ghost" type="button" data-add-party-skill>+ Färdighet</button>
+            <button class="btn btn-small btn-ghost" type="button" data-add-party-weapon>+ Vapen</button>
+          </div>
+        </div>
         ${attributes ? `<div class="mini-stat-grid">${attributes}</div>` : ''}
-        ${skills ? `<h3 style="margin-top:1.2rem">Högsta färdigheter</h3><ul class="value-list">${skills}</ul>` : ''}
+        <div class="party-skill-section-grid">${skillSections}</div>
+        <div class="subsection-head compact"><p class="eyebrow">Strid</p><h3>Vapen</h3></div>
+        ${weapons}
       </article>
     `;
   }
 
   async function renderCharacter(character) {
     clearObjectUrls();
+    diceController?.destroy();
+    diceController = null;
     const container = document.getElementById('party-character-content');
     const [portraitRecord, sheetRecord] = await Promise.all([
       getFile(character.portrait?.id).catch(() => null),
@@ -267,7 +345,7 @@
     const portraitUrl = portraitRecord?.blob ? objectUrl(portraitRecord.blob) : '';
     const sheetUrl = sheetRecord?.blob ? objectUrl(sheetRecord.blob) : '';
     const sheetIsPdf = String(sheetRecord?.type || character.sheet?.type || '').includes('pdf');
-    const importedValues = await renderImportedValues(character);
+    const importedValues = renderImportedValues(character);
     const facts = [
       ['Spelare', character.player],
       ['Släkte', character.kin],
@@ -297,13 +375,14 @@
 
       <div class="party-content-grid">
         <div class="party-main-column">
+          <div id="party-dice-panel"></div>
+          ${importedValues}
           <article class="card prose-card">
             <p class="eyebrow">Bakgrund</p>
             <h2>Berättelsen hittills</h2>
             ${character.background ? `<div class="party-background">${app.escapeHtml(character.background)}</div>` : '<div class="empty-state">Ingen bakgrund har lagts till ännu.</div>'}
           </article>
           ${character.notes ? `<article class="card"><p class="eyebrow">Anteckningar</p><div class="party-background">${app.escapeHtml(character.notes)}</div></article>` : ''}
-          ${importedValues}
         </div>
         <aside class="party-side-column">
           ${armorCardMarkup(character)}
@@ -323,6 +402,67 @@
       </div>
     `;
 
+    const source = valueSource(character);
+    diceController = window.DodDice?.mount('party-dice-panel', {
+      characterKey: () => character.id,
+      characterName: () => characterLabel(character),
+      player: () => character.player
+    }) || null;
+
+    container.querySelectorAll('[data-party-skill-value]').forEach((input) => input.addEventListener('change', () => {
+      const list = source[input.dataset.partySkillValue];
+      const skill = list[Number(input.dataset.partySkillIndex)];
+      skill.value = app.clamp(input.value, 0, 30);
+      input.value = skill.value;
+      character.updatedAt = Date.now();
+      app.saveState('Färdigheten uppdaterad');
+    }));
+    container.querySelectorAll('[data-party-skill-experience]').forEach((input) => input.addEventListener('change', async () => {
+      const list = source[input.dataset.partySkillExperience];
+      list[Number(input.dataset.partySkillIndex)].experience = input.checked;
+      character.updatedAt = Date.now();
+      app.saveState(input.checked ? 'Erfarenhet markerad' : 'Erfarenhetsmarkering borttagen');
+      await renderCharacter(character);
+    }));
+    container.querySelectorAll('[data-party-roll-skill]').forEach((button) => button.addEventListener('click', () => {
+      const skill = source[button.dataset.partyRollSkill][Number(button.dataset.partySkillIndex)];
+      diceController?.rollSkill(skill.name, skill.value, 'skill');
+    }));
+    container.querySelectorAll('[data-party-weapon-field]').forEach((input) => input.addEventListener('change', () => {
+      const weapon = source.weapons[Number(input.dataset.partyWeaponIndex)];
+      weapon[input.dataset.partyWeaponField] = input.value.trim();
+      character.updatedAt = Date.now();
+      app.saveState('Vapnet uppdaterat');
+    }));
+    container.querySelectorAll('[data-party-roll-attack]').forEach((button) => button.addEventListener('click', () => {
+      const weapon = source.weapons[Number(button.dataset.partyRollAttack)];
+      diceController?.rollSkill(`${weapon.name} – attack`, findSkillValue(source, weapon.skill || weapon.name), 'weapon-attack');
+    }));
+    container.querySelectorAll('[data-party-roll-damage]').forEach((button) => button.addEventListener('click', () => {
+      const weapon = source.weapons[Number(button.dataset.partyRollDamage)];
+      diceController?.rollFormula(`${weapon.name} – skada`, weapon.damage || 'T6', 'weapon-damage');
+    }));
+    container.querySelector('[data-add-party-skill]')?.addEventListener('click', async () => {
+      const name = prompt('Vad heter färdigheten?');
+      if (!name?.trim()) return;
+      const value = app.clamp(prompt(`Vilket värde har ${name.trim()}?`, '5'), 0, 30);
+      const weaponSkill = confirm('Är detta en vapenfärdighet?');
+      source[weaponSkill ? 'weaponSkills' : 'skills'].push({ name: name.trim(), attr: '', value, experience: false });
+      character.updatedAt = Date.now();
+      app.saveState('Färdighet tillagd');
+      await renderCharacter(character);
+    });
+    container.querySelector('[data-add-party-weapon]')?.addEventListener('click', async () => {
+      const name = prompt('Vad heter vapnet?');
+      if (!name?.trim()) return;
+      const skill = prompt('Vilken färdighet används för attacken?', '') || '';
+      const damage = prompt('Vilken skada gör vapnet? Exempel: T8 eller 2T6+1', 'T6') || 'T6';
+      source.weapons.push({ name: name.trim(), skill: skill.trim(), grip: '', range: '', damage: damage.trim(), durability: '', properties: '' });
+      character.updatedAt = Date.now();
+      app.saveState('Vapen tillagt');
+      await renderCharacter(character);
+    });
+
     container.querySelector('[data-edit-character]')?.addEventListener('click', () => openEditor(character));
     container.querySelector('[data-export-character]')?.addEventListener('click', () => exportCharacter(character));
     container.querySelector('[data-delete-character]')?.addEventListener('click', () => removeCharacter(character));
@@ -340,6 +480,7 @@
     const character = partyState().characters.find((entry) => entry.id === id);
     if (!character) return;
     activeId = id;
+    history.replaceState(null, '', `#${encodeURIComponent(id)}`);
     hidePanels();
     document.getElementById('party-character').hidden = false;
     renderTabs();
@@ -571,8 +712,14 @@
   document.addEventListener('DOMContentLoaded', async () => {
     bindUi();
     const characters = partyState().characters;
+    const hashValue = decodeURIComponent(location.hash.slice(1));
     renderTabs();
-    if (characters.length) {
+    if (hashValue === 'new') {
+      openEditor();
+    } else if (hashValue && characters.some((character) => character.id === hashValue)) {
+      activeId = hashValue;
+      await selectCharacter(activeId);
+    } else if (characters.length) {
       activeId = characters[0].id;
       await selectCharacter(activeId);
     } else {
@@ -581,5 +728,8 @@
     }
   });
 
-  window.addEventListener('beforeunload', clearObjectUrls);
+  window.addEventListener('beforeunload', () => {
+    clearObjectUrls();
+    diceController?.destroy();
+  });
 })();

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gemensamt initiativbord för Drakar och Demoner.">
+  <title>Initiativ — Äventyrargruppen</title>
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script defer src="assets/js/app.js"></script>
+  <script defer src="https://unpkg.com/mqtt@5.15.1/dist/mqtt.min.js"></script>
+  <script defer src="assets/js/initiative.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">DoD</span>
+        <span><strong>Äventyrargruppen</strong><small>Drakar och Demoner</small></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Öppna meny">Meny</button>
+      <nav class="site-nav" aria-label="Huvudmeny">
+        <a href="index.html">Gruppen</a>
+        <a class="active" href="initiative.html">Initiativ</a>
+        <a href="party.html#new">Lägg till karaktär</a>
+        <a href="party.html">Hantera gruppen</a>
+        <a href="character.html">Alvar / Folke</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container initiative-page">
+    <header class="page-head initiative-page-head">
+      <div>
+        <p class="eyebrow">Gemensamt stridsbord</p>
+        <h1>Initiativ</h1>
+        <p class="lead">Dra unika initiativkort 1–10, följ turordningen och vänd kortet när en deltagare har agerat. Alla som använder samma gruppkod ser samma bord.</p>
+      </div>
+      <div class="initiative-room-box no-print">
+        <label class="field"><span>Gruppkod</span><input data-initiative-room type="text" maxlength="80"></label>
+        <button class="btn btn-small btn-ghost" type="button" data-copy-initiative-room>Kopiera kod</button>
+        <span class="dice-status waiting" data-initiative-status>Gemensamt initiativ: ansluter…</span>
+      </div>
+    </header>
+
+    <section class="section-tight">
+      <div class="initiative-layout">
+        <aside class="card initiative-sidebar no-print">
+          <div class="initiative-sidebar-heading">
+            <div>
+              <p class="eyebrow">Deltagare</p>
+              <h2>Vilka är med?</h2>
+            </div>
+            <span id="initiative-selected-count" class="initiative-count">0 av 10 kort</span>
+          </div>
+
+          <div id="initiative-roster" class="initiative-roster"></div>
+
+          <div class="initiative-sidebar-actions">
+            <button id="refresh-party" class="btn btn-ghost" type="button">Hämta gruppens karaktärer</button>
+            <form id="add-npc-form" class="initiative-add-npc">
+              <label class="field"><span>Lägg till SLP eller monster</span><input name="name" type="text" placeholder="Exempel: Goblinerna eller Varg 1" required></label>
+              <button class="btn btn-secondary" type="submit">+ Lägg till</button>
+            </form>
+          </div>
+
+          <details class="initiative-rules">
+            <summary>Regler vid bordet</summary>
+            <div>
+              <p>De tio initiativkorten är numrerade 1–10. Ettan agerar först, därefter tvåan och så vidare.</p>
+              <p>När en deltagare har haft sin tur vänds kortet nedåt. Då är turen förbrukad och deltagaren kan inte senare utföra en reaktiv handling, till exempel att parera eller ducka.</p>
+              <p>Vid <strong>Avvakta</strong> får deltagaren byta med ett senare, ännu ovänt kort. Den som redan har agerat eller själv har avvaktat kan inte väljas.</p>
+            </div>
+          </details>
+        </aside>
+
+        <section class="initiative-main">
+          <article class="card initiative-controls no-print">
+            <div>
+              <p class="eyebrow">Striden</p>
+              <h2 id="initiative-round">Ingen pågående runda</h2>
+              <p id="initiative-progress" class="muted"></p>
+              <p id="initiative-swap-hint" class="initiative-swap-hint" hidden></p>
+            </div>
+            <div class="tools">
+              <button id="draw-initiative" class="btn btn-primary" type="button">Dra initiativ / ny runda</button>
+              <button id="turn-up-all" class="btn btn-ghost" type="button">Vänd upp alla</button>
+              <button id="clear-initiative" class="btn btn-danger" type="button">Avsluta striden</button>
+            </div>
+          </article>
+
+          <div id="initiative-board" class="initiative-board" aria-live="polite"></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="section-tight">
+      <article class="notice-card initiative-notice">
+        <strong>Klicka på ett kort när turen är slut.</strong>
+        <span>Kortet vänds med siffran nedåt och visar tydligt att karaktären inte längre kan använda sin vanliga tur eller en reaktiv handling under rundan.</span>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>Äventyrargruppen · initiativbord</span>
+      <a href="index.html">Till gruppens framsida →</a>
+    </div>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

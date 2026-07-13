@@ -21,7 +21,7 @@
   };
 
   const defaultState = {
-    version: 3,
+    version: 6,
     character: {
       name: 'Alvar Folke Musta',
       knownAs: 'Folke',
@@ -106,8 +106,8 @@
         { name: 'Mentalism', attr: '', value: 7 }
       ],
       weapons: [
-        { name: 'Dolk', grip: '1h', range: 'N', damage: 'T8', durability: '9', properties: 'Smidig, stickande, huggande, kan kastas' },
-        { name: 'Långbåge', grip: '2h', range: '100', damage: 'T12', durability: '6', properties: 'Stickande, kräver koger' }
+        { name: 'Dolk', skill: 'Kniv', grip: '1h', range: 'N', damage: 'T8', durability: '9', properties: 'Smidig, stickande, huggande, kan kastas' },
+        { name: 'Långbåge', skill: 'Pilbåge', grip: '2h', range: '100', damage: 'T12', durability: '6', properties: 'Stickande, kräver koger' }
       ],
       armor: {
         body: 'Läder',
@@ -139,6 +139,19 @@
       ]
     },
     journal: [],
+    dice: {
+      mode: 'private',
+      roomCode: 'MUSTA-GRUPP-7Q4K9X2M',
+      privateLogs: {},
+      publicLogs: []
+    },
+    initiative: {
+      round: 0,
+      participants: [],
+      entries: [],
+      updatedAt: 0,
+      changeId: ''
+    },
     party: { characters: [] }
   };
 
@@ -221,18 +234,102 @@
     };
   }
 
+  function normalizeSkillList(list) {
+    if (!Array.isArray(list)) return [];
+    return list.map((skill) => {
+      if (!skill || typeof skill !== 'object') return { name: '', attr: '', value: 0, experience: false };
+      skill.name = String(skill.name || '');
+      skill.attr = String(skill.attr || '');
+      skill.value = clamp(skill.value, 0, 30);
+      skill.experience = Boolean(skill.experience);
+      return skill;
+    });
+  }
+
+  function normalizeWeaponList(list) {
+    if (!Array.isArray(list)) return [];
+    return list.map((weapon) => {
+      if (!weapon || typeof weapon !== 'object') return { name: '', skill: '', damage: '' };
+      weapon.name = String(weapon.name || '');
+      weapon.skill = String(weapon.skill || '');
+      if (!weapon.skill) {
+        const name = weapon.name.toLowerCase();
+        weapon.skill = name.includes('båge') ? 'Pilbåge' : name.includes('dolk') || name.includes('kniv') ? 'Kniv' : '';
+      }
+      weapon.grip = String(weapon.grip || '');
+      weapon.range = String(weapon.range || '');
+      weapon.damage = String(weapon.damage || '');
+      weapon.durability = String(weapon.durability || '');
+      weapon.properties = String(weapon.properties || '');
+      return weapon;
+    });
+  }
+
+  function normalizeCharacterValues(character) {
+    if (!character || typeof character !== 'object') return character;
+    character.skills = normalizeSkillList(character.skills);
+    character.weaponSkills = normalizeSkillList(character.weaponSkills);
+    character.secondarySkills = normalizeSkillList(character.secondarySkills);
+    character.weapons = normalizeWeaponList(character.weapons);
+    return character;
+  }
+
   function normalizeState(nextState) {
     if (!nextState || typeof nextState !== 'object') return nextState;
     if (!nextState.character || typeof nextState.character !== 'object') nextState.character = {};
     nextState.character.armor = normalizeArmor(nextState.character.armor);
+    normalizeCharacterValues(nextState.character);
+
     if (!nextState.party || typeof nextState.party !== 'object') nextState.party = { characters: [] };
     if (!Array.isArray(nextState.party.characters)) nextState.party.characters = [];
     nextState.party.characters.forEach((character) => {
       if (!character || typeof character !== 'object') return;
       const sourceArmor = character.armor || character.sourceCharacter?.armor;
       character.armor = normalizeArmor(sourceArmor);
+      if (character.sourceCharacter && typeof character.sourceCharacter === 'object') {
+        character.sourceCharacter.armor = normalizeArmor(character.sourceCharacter.armor || character.armor);
+        normalizeCharacterValues(character.sourceCharacter);
+      } else {
+        normalizeCharacterValues(character);
+      }
     });
-    nextState.version = Math.max(Number(nextState.version) || 0, 3);
+
+    if (!nextState.dice || typeof nextState.dice !== 'object') nextState.dice = {};
+    nextState.dice.mode = nextState.dice.mode === 'public' ? 'public' : 'private';
+    nextState.dice.roomCode = String(nextState.dice.roomCode || defaultState.dice.roomCode).trim() || defaultState.dice.roomCode;
+    if (!nextState.dice.privateLogs || typeof nextState.dice.privateLogs !== 'object' || Array.isArray(nextState.dice.privateLogs)) nextState.dice.privateLogs = {};
+    if (!Array.isArray(nextState.dice.publicLogs)) nextState.dice.publicLogs = [];
+    nextState.dice.publicLogs = nextState.dice.publicLogs.slice(-60);
+    Object.keys(nextState.dice.privateLogs).forEach((key) => {
+      if (!Array.isArray(nextState.dice.privateLogs[key])) nextState.dice.privateLogs[key] = [];
+      else nextState.dice.privateLogs[key] = nextState.dice.privateLogs[key].slice(-40);
+    });
+
+    if (!nextState.initiative || typeof nextState.initiative !== 'object') nextState.initiative = {};
+    nextState.initiative.round = clamp(nextState.initiative.round, 0, 9999);
+    if (!Array.isArray(nextState.initiative.participants)) nextState.initiative.participants = [];
+    nextState.initiative.participants = nextState.initiative.participants.slice(0, 40).map((participant) => ({
+      id: String(participant?.id || makeId('participant')),
+      sourceId: String(participant?.sourceId || ''),
+      name: String(participant?.name || 'Namnlös'),
+      player: String(participant?.player || ''),
+      type: participant?.type === 'npc' ? 'npc' : 'character',
+      selected: participant?.selected !== false
+    }));
+    if (!Array.isArray(nextState.initiative.entries)) nextState.initiative.entries = [];
+    nextState.initiative.entries = nextState.initiative.entries.slice(0, 10).map((entry) => ({
+      participantId: String(entry?.participantId || ''),
+      name: String(entry?.name || 'Namnlös'),
+      player: String(entry?.player || ''),
+      type: entry?.type === 'npc' ? 'npc' : 'character',
+      card: clamp(entry?.card, 1, 10),
+      acted: Boolean(entry?.acted),
+      delayed: Boolean(entry?.delayed)
+    }));
+    nextState.initiative.updatedAt = Number(nextState.initiative.updatedAt) || 0;
+    nextState.initiative.changeId = String(nextState.initiative.changeId || '');
+
+    nextState.version = Math.max(Number(nextState.version) || 0, 6);
     return nextState;
   }
 
@@ -357,6 +454,9 @@
     armorCatalog: clone(ARMOR_CATALOG),
     normalizeArmor,
     armorDetails,
+    normalizeSkillList,
+    normalizeWeaponList,
+    normalizeCharacterValues,
     defaultState: clone(defaultState)
   };
 

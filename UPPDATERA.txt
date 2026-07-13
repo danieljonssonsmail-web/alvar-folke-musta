@@ -1,0 +1,32 @@
+UPPDATERING: TÄRNINGAR, ERFARENHET OCH INITIATIV
+
+Den här uppdateringen är gjord för version 4 av gruppsajten och innehåller allt som lagts till efter den:
+
+• Privata och offentliga tärningsslag.
+• Slagknappar vid färdigheter och vapen.
+• Valfria tärningar: T4, T6, T8, T10, T12, T20, T100 eller valfritt antal sidor.
+• Erfarenhetsruta framför varje färdighet.
+• Ny sida: Initiativ.
+• Unika initiativkort 1–10, ny runda, vändbara kort och avvakta/byte.
+• Gemensam synk för offentliga slag och initiativ via samma gruppkod.
+
+SÅ LÄGGER DU IN DEN
+
+1. Exportera gärna Alvars data som säkerhetskopia på webbsidan.
+2. Packa upp denna zip-fil.
+3. Öppna GitHub Desktop.
+4. Välj Repository → Show in Explorer.
+5. Kopiera ALLT från den uppackade mappen till repositorymappen.
+6. Välj Ersätt filerna när Windows frågar.
+7. Gå tillbaka till GitHub Desktop.
+8. Skriv exempelvis: Lägg till tärningar erfarenhet och initiativ.
+9. Klicka Commit to main.
+10. Klicka Push origin.
+
+DINA SPARADE UPPGIFTER
+
+Uppdateringen använder samma lokala lagring som tidigare. Ändringar du gjort på Alvars webbsida, inventory och journal ska därför ligga kvar. Filerna i repositoryt byts ut, men webbläsarens sparade karaktärsdata raderas inte.
+
+OFFENTLIGA SLAG OCH INITIATIV
+
+Alla spelare måste använda samma gruppkod. Privata slag skickas inte till gruppen utan sparas bara lokalt i den aktuella karaktärens privata logg. Offentliga slag och initiativ kräver internet för att synkas mellan olika enheter. Utan internet fungerar verktygen fortfarande lokalt.

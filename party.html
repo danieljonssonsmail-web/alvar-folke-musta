@@ -4,36 +4,37 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Medspelarnas karaktärer, bakgrunder och karaktärsblad för Drakar och Demoner.">
-  <title>Gruppen — Alvar Musta</title>
+  <title>Hantera gruppen — Drakar och Demoner</title>
   <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/styles.css">
   <script defer src="assets/js/app.js"></script>
+  <script defer src="https://unpkg.com/mqtt@5.15.1/dist/mqtt.min.js"></script>
+  <script defer src="assets/js/dice.js"></script>
   <script defer src="assets/js/party.js"></script>
 </head>
 <body>
   <header class="site-header">
     <div class="header-inner">
       <a class="brand" href="index.html">
-        <span class="brand-mark">AM</span>
-        <span><strong>Alvar Musta</strong><small>De flesta kallar honom Folke</small></span>
+        <span class="brand-mark">DoD</span>
+        <span><strong>Äventyrargruppen</strong><small>Drakar och Demoner</small></span>
       </a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Öppna meny">Meny</button>
       <nav class="site-nav" aria-label="Huvudmeny">
-        <a href="index.html">Översikt</a>
-        <a href="character.html">Karaktärsblad</a>
-        <a href="background.html">Bakgrund</a>
-        <a href="inventory.html">Inventory</a>
-        <a class="active" href="party.html">Gruppen</a>
-        <a href="journal.html">Journal</a>
+        <a href="index.html">Gruppen</a>
+        <a href="initiative.html">Initiativ</a>
+        <a href="party.html#new">Lägg till karaktär</a>
+        <a class="active" href="party.html">Hantera gruppen</a>
+        <a href="character.html">Alvar / Folke</a>
       </nav>
     </div>
   </header>
 
   <main class="container">
     <header class="page-head">
-      <p class="eyebrow">Medspelarna</p>
-      <h1>Gruppens karaktärer</h1>
-      <p class="lead">Lägg till medspelarnas bakgrunder och ladda upp deras karaktärsblad som PDF eller bild. Varje karaktär får en egen flik.</p>
+      <p class="eyebrow">Gruppverktyg</p>
+      <h1>Hantera karaktärerna</h1>
+      <p class="lead">Lägg till gruppens bakgrunder och ladda upp karaktärsblad som PDF eller bild. Alvar finns med som gruppens första karaktär och varje ny karaktär får en egen flik.</p>
     </header>
 
     <section class="section-tight">
@@ -141,8 +142,8 @@
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <span>Alvar Folke Musta · gruppens karaktärer</span>
-      <a href="journal.html">Fortsätt till kampanjjournalen →</a>
+      <span>Äventyrargruppen · Drakar och Demoner</span>
+      <a href="index.html">Till gruppens framsida →</a>
     </div>
   </footer>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

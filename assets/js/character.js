@@ -2,6 +2,7 @@
   'use strict';
 
   const app = window.AlvarApp;
+  let diceController = null;
   const attrMeta = [
     ['styrka', 'Styrka', 'STY'],
     ['fysik', 'Fysik', 'FYS'],
@@ -187,11 +188,24 @@
 
   function skillRows(list, section) {
     return list.map((skill, index) => `
-      <label class="skill-row" data-skill-row data-name="${app.escapeHtml(skill.name.toLowerCase())}">
+      <div class="skill-row" data-skill-row data-name="${app.escapeHtml(skill.name.toLowerCase())}">
+        <label class="skill-xp-check" title="Erfarenhet: färdigheten får försöka höjas efter spelmötet">
+          <input type="checkbox" ${skill.experience ? 'checked' : ''} data-skill-experience="${section}" data-skill-index="${index}" aria-label="Erfarenhet för ${app.escapeHtml(skill.name)}">
+          <span aria-hidden="true">✓</span>
+        </label>
         <span class="skill-name">${app.escapeHtml(skill.name)} ${skill.attr ? `<small>(${app.escapeHtml(skill.attr)})</small>` : ''}</span>
-        <input type="number" min="0" max="30" value="${skill.value}" data-skill-section="${section}" data-skill-index="${index}" aria-label="${app.escapeHtml(skill.name)}">
-      </label>
+        <input class="skill-value" type="number" min="0" max="30" value="${skill.value}" data-skill-section="${section}" data-skill-index="${index}" aria-label="Värde för ${app.escapeHtml(skill.name)}">
+        <button class="btn btn-small btn-ghost skill-roll-button" type="button" data-roll-skill="${section}" data-skill-index="${index}">Slå</button>
+      </div>
     `).join('');
+  }
+
+  function updateExperienceSummary() {
+    const state = app.getState();
+    const all = [...state.character.skills, ...state.character.weaponSkills, ...state.character.secondarySkills];
+    const marked = all.filter((skill) => skill.experience).length;
+    const summary = document.getElementById('experience-summary');
+    if (summary) summary.textContent = marked ? `${marked} markerade för höjning` : 'Ingen färdighet markerad ännu';
   }
 
   function renderSkills() {
@@ -199,6 +213,7 @@
     document.getElementById('general-skills').innerHTML = skillRows(state.character.skills, 'skills');
     document.getElementById('weapon-skills').innerHTML = skillRows(state.character.weaponSkills, 'weaponSkills');
     document.getElementById('secondary-skills').innerHTML = skillRows(state.character.secondarySkills, 'secondarySkills');
+
     document.querySelectorAll('[data-skill-section]').forEach((input) => {
       input.addEventListener('change', () => {
         const list = state.character[input.dataset.skillSection];
@@ -207,6 +222,24 @@
         app.saveState();
       });
     });
+
+    document.querySelectorAll('[data-skill-experience]').forEach((input) => {
+      input.addEventListener('change', () => {
+        const list = state.character[input.dataset.skillExperience];
+        list[Number(input.dataset.skillIndex)].experience = input.checked;
+        app.saveState(input.checked ? 'Erfarenhet markerad' : 'Erfarenhetsmarkering borttagen');
+        updateExperienceSummary();
+      });
+    });
+
+    document.querySelectorAll('[data-roll-skill]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const list = state.character[button.dataset.rollSkill];
+        const skill = list[Number(button.dataset.skillIndex)];
+        diceController?.rollSkill(skill.name, skill.value, 'skill');
+      });
+    });
+    updateExperienceSummary();
   }
 
   function armorOptions(kind, selected) {
@@ -306,22 +339,44 @@
     }));
   }
 
+  function findSkillValue(name) {
+    const state = app.getState();
+    const normalized = String(name || '').trim().toLowerCase();
+    const all = [...state.character.weaponSkills, ...state.character.skills, ...state.character.secondarySkills];
+    const exact = all.find((skill) => skill.name.toLowerCase() === normalized);
+    if (exact) return exact.value;
+    const partial = all.find((skill) => normalized && (skill.name.toLowerCase().includes(normalized) || normalized.includes(skill.name.toLowerCase())));
+    return partial ? partial.value : null;
+  }
+
   function renderWeapons() {
     const state = app.getState();
     const tbody = document.getElementById('weapon-table');
     tbody.innerHTML = state.character.weapons.map((weapon, index) => `
       <tr>
         <td><input type="text" value="${app.escapeHtml(weapon.name)}" data-weapon="${index}" data-field="name"></td>
+        <td><input type="text" value="${app.escapeHtml(weapon.skill || '')}" data-weapon="${index}" data-field="skill" placeholder="Färdighet"></td>
         <td><input type="text" value="${app.escapeHtml(weapon.grip)}" data-weapon="${index}" data-field="grip"></td>
         <td><input type="text" value="${app.escapeHtml(weapon.range)}" data-weapon="${index}" data-field="range"></td>
         <td><input type="text" value="${app.escapeHtml(weapon.damage)}" data-weapon="${index}" data-field="damage"></td>
         <td><input type="text" value="${app.escapeHtml(weapon.durability)}" data-weapon="${index}" data-field="durability"></td>
         <td><input type="text" value="${app.escapeHtml(weapon.properties)}" data-weapon="${index}" data-field="properties"></td>
+        <td><button class="btn btn-small btn-ghost" type="button" data-roll-weapon-attack="${index}">Attack</button></td>
+        <td><button class="btn btn-small btn-secondary" type="button" data-roll-weapon-damage="${index}">Skada</button></td>
       </tr>
     `).join('');
     tbody.querySelectorAll('[data-weapon]').forEach((input) => input.addEventListener('change', () => {
       state.character.weapons[Number(input.dataset.weapon)][input.dataset.field] = input.value.trim();
       app.saveState();
+    }));
+    tbody.querySelectorAll('[data-roll-weapon-attack]').forEach((button) => button.addEventListener('click', () => {
+      const weapon = state.character.weapons[Number(button.dataset.rollWeaponAttack)];
+      const target = findSkillValue(weapon.skill || weapon.name);
+      diceController?.rollSkill(`${weapon.name} – attack`, target, 'weapon-attack');
+    }));
+    tbody.querySelectorAll('[data-roll-weapon-damage]').forEach((button) => button.addEventListener('click', () => {
+      const weapon = state.character.weapons[Number(button.dataset.rollWeaponDamage)];
+      diceController?.rollFormula(`${weapon.name} – skada`, weapon.damage || 'T6', 'weapon-damage');
     }));
 
     renderArmor();
@@ -350,6 +405,11 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    diceController = window.DodDice?.mount('dice-panel', {
+      characterKey: 'alvar-folke-musta',
+      characterName: () => app.getState().character.knownAs || app.getState().character.name,
+      player: () => app.getState().character.player
+    }) || null;
     renderAll();
     bindSearch();
     window.addEventListener('alvar-state-changed', renderAll);
