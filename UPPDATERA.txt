@@ -1,40 +1,25 @@
-UPPDATERING: KOMPLETTA KARAKTÄRSSIDOR FÖR HELA GRUPPEN
+UPPDATERING V8 – KARAKTÄRSBLAD OCH SPELRAD
 
-Den här uppdateringen gör Alvar/Folke och alla medspelarkaraktärer likvärdiga.
-Varje karaktär får egna flikar för:
-
-- Översikt
-- Karaktärsblad
-- Bakgrund
-- Inventory
-- Journal
-
-Varje karaktär behåller också sina egna:
-
-- tärningsslag och privat logg
-- färdigheter och erfarenhetsmarkeringar
-- vapen och vapenslag
-- rustning och skydd
-- porträtt och uppladdat originalblad
-- pengar, föremål och journalanteckningar
-
-SÅ LÄGGER DU IN UPPDATERINGEN
-
-1. Packa upp zip-filen.
-2. Öppna GitHub Desktop.
-3. Välj Repository -> Show in Explorer.
-4. Kopiera ALLT i den uppackade uppdateringsmappen till repositorymappen.
-5. Välj Ersätt filer när Windows frågar.
-6. Gå tillbaka till GitHub Desktop.
-7. Skriv exempelvis: Kompletta karaktärssidor för hela gruppen
-8. Klicka Commit to main.
+1. Exportera gärna en säkerhetskopia från sajten först.
+2. Packa upp denna zip-fil.
+3. Öppna repositoryt i GitHub Desktop.
+4. Välj Repository -> Show in Explorer.
+5. Kopiera mapparna assets samt README.md från denna mapp till repositorymappen.
+6. Välj Ersätt filer när Windows frågar.
+7. Gå tillbaka till GitHub Desktop.
+8. Commit: "Förbättra karaktärsblad och spelrad"
 9. Klicka Push origin.
 
-DINA BEFINTLIGA UPPGIFTER
+Uppdateringen ändrar inte lagringsnyckeln. Befintliga karaktärer, inventory,
+journaler, färdigheter och erfarenhetsmarkeringar ska därför ligga kvar.
 
-Data som redan har skrivits på sidan sparas i webbläsaren och ska ligga kvar.
-Alvars inventory, journal, färdigheter och ändringar migreras automatiskt.
-Tidigare medspelarkaraktärer får egna inventory- och journalsidor. Om sådana data
-fanns i ett importerat paket flyttas de automatiskt till rätt karaktär.
-
-Exportera gärna en säkerhetskopia av hela gruppen innan du uppdaterar.
+NYTT:
+- Rustningen ligger i en egen fullbreddssektion och täcker inte originalbladet.
+- Originalbladet visas i full bredd och nästan full skärmhöjd.
+- Hjälteförmågor och besvärjelser har stora utförliga fält.
+- Fritexten är större och autosparas medan du skriver.
+- En fast spelrad är alltid synlig längst ned.
+- KP och VP kan minskas, ökas, skrivas in eller återställas utan scroll.
+- Vapenattack och skada kan slås direkt i spelraden.
+- Alla färdigheter och valfria tärningar finns i panelen Strid & slag.
+- Senaste slagresultatet syns i spelraden oavsett var på sidan du befinner dig.

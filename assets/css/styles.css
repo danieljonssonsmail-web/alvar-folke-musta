@@ -1179,3 +1179,546 @@ td input, td select { width:100%; min-width:70px; }
   .party-skill-row .btn { grid-column:2; }
   .party-skill-row .icon-button { grid-column:3; }
 }
+
+/* Version 8: tydligare karaktärsblad och tärningsdocka som alltid är nära */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.character-sheet-workspace {
+  display: grid;
+  gap: 1.2rem;
+}
+.sheet-armor-row .armor-card {
+  position: static;
+  display: grid;
+  grid-template-columns: minmax(300px, .9fr) minmax(380px, 1.1fr);
+  gap: 1rem 1.4rem;
+  align-items: start;
+}
+.sheet-armor-row .armor-card > .eyebrow { grid-column: 1 / -1; margin-bottom: -.4rem; }
+.sheet-armor-row .armor-summary { min-height: 100%; }
+.sheet-armor-row .quick-armor-fields,
+.sheet-armor-row .damage-protection-grid,
+.sheet-armor-row .tools,
+.sheet-armor-row .armor-rules { grid-column: 2; }
+.sheet-armor-row .quick-armor-fields { margin-top: 0; }
+.sheet-armor-row .armor-rules { width: 100%; }
+
+.detailed-section-card { overflow: visible; }
+.detailed-editable-list {
+  display: grid;
+  gap: .9rem;
+}
+.detailed-list-row {
+  display: grid;
+  gap: .75rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255,255,255,.34);
+}
+.detailed-list-head {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-items: end;
+  gap: .7rem;
+}
+.detailed-list-name { max-width: 460px; }
+.detailed-list-row textarea {
+  width: 100%;
+  min-height: 125px;
+  resize: vertical;
+  line-height: 1.55;
+}
+.sheet-free-text-card textarea {
+  min-height: 280px;
+  resize: vertical;
+  line-height: 1.65;
+}
+.original-sheet-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.character-original-sheet { overflow: visible; }
+.character-original-sheet .party-sheet-pdf-full {
+  display: block;
+  width: 100%;
+  height: min(1100px, calc(100vh - 120px));
+  min-height: 760px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+}
+.character-original-sheet .party-sheet-image { width: 100%; }
+
+body.dice-dock-active { padding-bottom: 104px; }
+.dice-dock-host {
+  position: fixed;
+  z-index: 90;
+  left: 50%;
+  bottom: 12px;
+  width: min(1460px, calc(100% - 24px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.dice-dock-card {
+  position: relative;
+  pointer-events: auto;
+  border: 1px solid rgba(217,189,120,.5);
+  border-radius: 16px;
+  color: white;
+  background: rgba(17,54,50,.97);
+  box-shadow: 0 18px 55px rgba(4,19,17,.38);
+  backdrop-filter: blur(18px);
+}
+.dice-dock-main {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  padding: .62rem .72rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.dice-dock-character {
+  flex: 0 0 auto;
+  min-width: 92px;
+  display: grid;
+  gap: .08rem;
+  padding-right: .6rem;
+  border-right: 1px solid rgba(255,255,255,.16);
+  font-family: system-ui, sans-serif;
+}
+.dice-dock-character span {
+  color: var(--gold-light);
+  font-size: .62rem;
+  font-weight: 900;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.dice-dock-character strong {
+  max-width: 135px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .86rem;
+}
+.dice-mode {
+  display: inline-flex;
+  border: 1px solid rgba(31,98,90,.35);
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255,255,255,.5);
+}
+.dice-mode button {
+  border: 0;
+  padding: .55rem .7rem;
+  color: var(--green-dark);
+  background: transparent;
+  font-family: system-ui, sans-serif;
+  font-size: .76rem;
+  font-weight: 850;
+}
+.dice-mode button + button { border-left: 1px solid rgba(31,98,90,.25); }
+.dice-mode button.active { color: white; background: var(--green); }
+.dice-mode-compact { flex: 0 0 auto; border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.09); }
+.dice-mode-compact button { color: rgba(255,255,255,.8); padding: .48rem .58rem; }
+.dice-mode-compact button + button { border-color: rgba(255,255,255,.16); }
+.dice-mode-compact button.active { color: #1c2d28; background: var(--gold-light); }
+.dice-quick {
+  display: flex;
+  gap: .35rem;
+  flex-wrap: wrap;
+}
+.dice-quick-dock { flex: 0 0 auto; flex-wrap: nowrap; }
+.die-button {
+  min-width: 42px;
+  min-height: 38px;
+  border: 1px solid rgba(31,98,90,.28);
+  border-radius: 9px;
+  color: var(--green-dark);
+  background: rgba(255,255,255,.62);
+  font-family: system-ui, sans-serif;
+  font-size: .76rem;
+  font-weight: 900;
+}
+.dice-quick-dock .die-button {
+  min-width: 39px;
+  min-height: 36px;
+  color: white;
+  border-color: rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
+}
+.dice-quick-dock .die-button:hover { color: #20322d; background: var(--gold-light); }
+.dice-custom-dock {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 48px auto 52px 58px minmax(125px,190px) auto;
+  align-items: center;
+  gap: .3rem;
+  margin: 0;
+}
+.dice-custom-dock input {
+  width: 100%;
+  min-height: 36px;
+  padding: .38rem .45rem;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 8px;
+  color: white;
+  background: rgba(255,255,255,.08);
+  font-family: system-ui, sans-serif;
+  font-size: .78rem;
+}
+.dice-custom-dock input::placeholder { color: rgba(255,255,255,.5); }
+.dice-custom-dock > span { color: rgba(255,255,255,.65); font-family: system-ui,sans-serif; }
+.dice-dock-latest {
+  flex: 0 0 auto;
+  min-width: 145px;
+  max-width: 225px;
+  display: grid;
+  gap: .05rem;
+  padding: .42rem .6rem;
+  border-left: 1px solid rgba(255,255,255,.15);
+  font-family: system-ui,sans-serif;
+}
+.dice-dock-latest span {
+  overflow: hidden;
+  color: rgba(255,255,255,.62);
+  font-size: .64rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dice-dock-latest strong {
+  color: var(--gold-light);
+  font-size: 1rem;
+  white-space: nowrap;
+}
+.dice-result-flash { animation: diceResultFlash .52s ease; }
+@keyframes diceResultFlash {
+  0% { background: rgba(217,189,120,.5); transform: scale(1.07); }
+  100% { background: transparent; transform: scale(1); }
+}
+.dice-dock-expand { flex: 0 0 auto; color: white; border-color: rgba(255,255,255,.28); }
+.dice-dock-drawer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 8px);
+  max-height: min(620px, 68vh);
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid rgba(217,189,120,.45);
+  border-radius: 16px;
+  color: var(--ink);
+  background: rgba(248,242,229,.985);
+  box-shadow: 0 20px 55px rgba(4,19,17,.36);
+}
+.dice-public-settings {
+  display: flex;
+  align-items: end;
+  gap: .65rem;
+  flex-wrap: wrap;
+  margin: .9rem 0;
+}
+.dice-room-field { flex: 1 1 280px; }
+.dice-status {
+  padding: .42rem .6rem;
+  border-radius: 999px;
+  font-family: system-ui,sans-serif;
+  font-size: .7rem;
+  font-weight: 850;
+}
+.dice-status.online { color: #14533e; background: #d9efe5; }
+.dice-status.waiting { color: #695219; background: #f1e5bd; }
+.dice-status.warning { color: #7a302d; background: #f2d8d4; }
+.dice-log-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.dice-log-panel {
+  min-width: 0;
+  padding: .9rem;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: rgba(255,255,255,.36);
+}
+.dice-log-heading,
+.dice-log-top,
+.dice-result-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .7rem;
+}
+.dice-log-entry {
+  margin-top: .65rem;
+  padding: .7rem;
+  border-left: 4px solid var(--green);
+  border-radius: 9px;
+  background: rgba(31,98,90,.06);
+}
+.dice-log-entry.dragon { border-left-color: #357f52; }
+.dice-log-entry.demon { border-left-color: var(--red); }
+.dice-log-entry p,
+.dice-log-entry small { margin: .25rem 0 0; color: var(--ink-soft); font-family: system-ui,sans-serif; font-size: .76rem; }
+.dice-log-top time { color: var(--ink-soft); font-family: system-ui,sans-serif; font-size: .68rem; }
+.dice-result-line { justify-content: flex-start; margin-top: .3rem; font-family: system-ui,sans-serif; }
+.dice-total { color: var(--green-dark); font-size: 1.7rem; font-weight: 900; }
+.dice-empty { color: var(--ink-soft); font-family: system-ui,sans-serif; font-size: .82rem; }
+.dice-custom-form:not(.dice-custom-dock) {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(90px,.45fr)) minmax(220px,1.5fr) auto;
+  align-items: end;
+  gap: .65rem;
+  margin-top: .9rem;
+}
+.dice-card .dice-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; }
+.dice-card .dice-quick { margin-top:.8rem; }
+
+@media (max-width: 980px) {
+  .sheet-armor-row .armor-card { grid-template-columns: 1fr; }
+  .sheet-armor-row .quick-armor-fields,
+  .sheet-armor-row .damage-protection-grid,
+  .sheet-armor-row .tools,
+  .sheet-armor-row .armor-rules { grid-column: 1; }
+  .character-original-sheet .party-sheet-pdf-full { min-height: 650px; }
+  .dice-log-grid { grid-template-columns: 1fr; }
+  .dice-custom-form:not(.dice-custom-dock) { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .dice-custom-form:not(.dice-custom-dock) .dice-label-field { grid-column: 1 / -1; }
+}
+@media (max-width: 620px) {
+  body.dice-dock-active { padding-bottom: 96px; }
+  .dice-dock-host { bottom: 6px; width: calc(100% - 12px); }
+  .dice-dock-main { min-height: 70px; padding: .48rem; }
+  .dice-dock-character { min-width: 74px; }
+  .dice-dock-character strong { max-width: 90px; }
+  .dice-custom-dock { grid-template-columns: 44px auto 48px 52px 125px auto; }
+  .dice-dock-latest { min-width: 125px; }
+  .dice-dock-drawer { max-height: 72vh; padding: .7rem; }
+  .original-sheet-heading { flex-direction: column; }
+  .character-original-sheet .party-sheet-pdf-full { min-height: 520px; height: 72vh; }
+  .detailed-list-head { grid-template-columns: 1fr; }
+  .detailed-list-name { max-width: none; }
+  .dice-custom-form:not(.dice-custom-dock) { grid-template-columns: 1fr; }
+  .dice-custom-form:not(.dice-custom-dock) .dice-label-field { grid-column: auto; }
+}
+.sheet-armor-row .armor-summary { grid-row: 2 / span 4; }
+body.dice-dock-active .toast { bottom: 112px; }
+@media (max-width: 980px) {
+  .sheet-armor-row .armor-summary { grid-row: auto; }
+}
+@media (max-width: 620px) {
+  body.dice-dock-active .toast { bottom: 100px; }
+}
+
+/* Version 8.1: fast spelrad för strid, resurser och slag */
+.character-sheet-workspace,
+.sheet-armor-row,
+.character-original-sheet {
+  position: relative;
+  z-index: 0;
+  min-width: 0;
+}
+.sheet-armor-row { isolation: isolate; }
+.character-original-sheet { clear: both; }
+
+.ability-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .7rem;
+}
+.detailed-list-row textarea { min-height: 165px; }
+.sheet-free-text-card textarea {
+  min-height: 420px;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.character-original-sheet .party-sheet-pdf-full {
+  height: 88vh;
+  min-height: 820px;
+}
+
+body.dice-dock-active { padding-bottom: 116px; }
+.dice-dock-host { width: min(1580px, calc(100% - 20px)); }
+.dice-dock-main {
+  min-height: 84px;
+  gap: .5rem;
+  padding: .55rem .62rem;
+}
+.dice-dock-character { min-width: 82px; padding-right: .5rem; }
+.dice-dock-character strong { max-width: 110px; }
+
+.combat-resource-strip {
+  flex: 0 0 auto;
+  display: flex;
+  gap: .38rem;
+}
+.combat-resource {
+  display: grid;
+  grid-template-columns: auto 27px minmax(58px, auto) 27px auto;
+  align-items: center;
+  gap: .2rem;
+  min-height: 42px;
+  padding: .28rem .35rem;
+  border: 1px solid rgba(255,255,255,.19);
+  border-radius: 11px;
+  background: rgba(255,255,255,.075);
+  font-family: system-ui, sans-serif;
+}
+.combat-resource > span {
+  color: var(--gold-light);
+  font-size: .66rem;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+.combat-resource button {
+  min-width: 27px;
+  min-height: 28px;
+  padding: 0 .3rem;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 7px;
+  color: white;
+  background: rgba(255,255,255,.08);
+  font-family: system-ui, sans-serif;
+  font-size: .76rem;
+  font-weight: 900;
+}
+.combat-resource button:hover { color: #172e29; background: var(--gold-light); }
+.combat-resource .combat-resource-value {
+  min-width: 58px;
+  color: var(--gold-light);
+  background: rgba(0,0,0,.12);
+}
+.combat-resource-value strong { font-size: .88rem; white-space: nowrap; }
+.combat-resource .combat-resource-reset {
+  padding-inline: .42rem;
+  color: rgba(255,255,255,.78);
+  font-size: .62rem;
+}
+
+.combat-armor-chip {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  min-width: 52px;
+  min-height: 43px;
+  padding: .25rem .5rem;
+  border: 1px solid rgba(217,189,120,.38);
+  border-radius: 10px;
+  background: rgba(217,189,120,.1);
+  font-family: system-ui,sans-serif;
+}
+.combat-armor-chip span {
+  color: rgba(255,255,255,.68);
+  font-size: .56rem;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.combat-armor-chip strong { color: var(--gold-light); font-size: 1.05rem; }
+
+.combat-weapon-quick {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(135px, 185px) auto auto;
+  align-items: center;
+  gap: .28rem;
+}
+.combat-weapon-quick select,
+.dice-select-action select {
+  width: 100%;
+  min-height: 36px;
+  padding: .38rem .5rem;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 8px;
+  color: white;
+  background: #1b4f49;
+  font-family: system-ui,sans-serif;
+  font-size: .74rem;
+  font-weight: 750;
+}
+.combat-weapon-quick option,
+.dice-select-action option { color: #1c2d28; background: #f8f2e5; }
+
+.dice-dock-main .dice-quick-dock { gap: .24rem; }
+.dice-dock-main .dice-quick-dock .die-button {
+  min-width: 35px;
+  min-height: 34px;
+  padding: .25rem;
+}
+.dice-dock-main .dice-mode-compact button { padding: .45rem .5rem; }
+.dice-dock-main .dice-dock-latest { min-width: 128px; max-width: 175px; padding-inline: .45rem; }
+.dice-dock-main .dice-dock-expand { white-space: nowrap; }
+
+.dice-tool-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, .8fr) minmax(520px, 1.2fr);
+  gap: 1rem;
+}
+.dice-tool-panel {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255,255,255,.38);
+}
+.dice-tool-panel h3 { margin-top: .15rem; }
+.dice-select-action {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: .55rem;
+  margin-top: .8rem;
+}
+.dice-select-action select {
+  color: var(--ink);
+  border-color: var(--line);
+  background: rgba(255,255,255,.8);
+}
+.combat-status-summary {
+  display: grid;
+  gap: .35rem;
+  margin-top: .8rem;
+  color: var(--ink-soft);
+  font-family: system-ui,sans-serif;
+  font-size: .78rem;
+}
+.dice-quick-drawer { margin-top: .65rem; }
+.dice-tool-panel .dice-custom-form {
+  grid-template-columns: repeat(3,minmax(80px,.45fr)) minmax(200px,1.3fr) auto;
+}
+
+@media (max-width: 1320px) {
+  .dice-dock-main .dice-quick-dock { display: none; }
+  .combat-weapon-quick { grid-template-columns: minmax(125px,165px) auto auto; }
+}
+@media (max-width: 1040px) {
+  .combat-armor-chip { display: none; }
+  .dice-tool-grid { grid-template-columns: 1fr; }
+  .ability-meta-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 760px) {
+  body.dice-dock-active { padding-bottom: 102px; }
+  .dice-dock-host { width: calc(100% - 10px); bottom: 5px; }
+  .dice-dock-main { min-height: 76px; }
+  .combat-resource { grid-template-columns: auto 25px minmax(52px,auto) 25px; }
+  .combat-resource-reset { display: none; }
+  .combat-weapon-quick { grid-template-columns: minmax(125px,155px) auto auto; }
+  .dice-dock-main .dice-dock-latest { min-width: 115px; }
+  .ability-meta-grid { grid-template-columns: 1fr; }
+  .character-original-sheet .party-sheet-pdf-full { min-height: 560px; height: 78vh; }
+}

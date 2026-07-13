@@ -20,6 +20,7 @@
   let currentObjectUrls = [];
   let diceController = null;
   let editingJournalId = null;
+  let autosaveTimer = null;
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -37,7 +38,7 @@
       attributes: { styrka: 0, fysik: 0, smidighet: 0, intelligens: 0, psyke: 0, karisma: 0 },
       derived: { movement: 0, strengthDamage: '', agilityDamage: '', hpCurrent: 0, hpMax: 0, wpCurrent: 0, wpMax: 0 },
       conditions: { utmattad: false, krasslig: false, omtocknad: false, arg: false, radd: false, uppgiven: false },
-      abilities: [], tricks: [], skills: [], weaponSkills: [], secondarySkills: [], weapons: []
+      abilities: [], tricks: [], skills: [], weaponSkills: [], secondarySkills: [], weapons: [], sheetNotes: ''
     };
   }
 
@@ -55,10 +56,22 @@
     Object.keys(defaults.conditions).forEach((key) => {
       source.conditions[key] = Boolean(source.conditions[key]);
     });
-    ['abilities', 'tricks'].forEach((key) => {
-      if (!Array.isArray(source[key])) source[key] = [];
-      source[key] = source[key].map((entry) => ({ name: String(entry?.name || ''), notes: String(entry?.notes || '') }));
-    });
+    source.sheetNotes = String(source.sheetNotes || '');
+    if (!Array.isArray(source.abilities)) source.abilities = [];
+    source.abilities = source.abilities.map((entry) => ({
+      name: String(entry?.name || ''),
+      cost: String(entry?.cost || ''),
+      requirement: String(entry?.requirement || ''),
+      notes: String(entry?.notes || '')
+    }));
+    if (!Array.isArray(source.tricks)) source.tricks = [];
+    source.tricks = source.tricks.map((entry) => ({
+      name: String(entry?.name || ''),
+      cost: String(entry?.cost || ''),
+      range: String(entry?.range || ''),
+      duration: String(entry?.duration || ''),
+      notes: String(entry?.notes || '')
+    }));
     app.normalizeCharacterValues(source);
     return source;
   }
@@ -312,7 +325,6 @@
     return `
       <div class="party-content-grid">
         <div class="party-main-column">
-          <div id="party-dice-panel"></div>
           <article class="card">
             <p class="eyebrow">Snabböversikt</p><h2>${app.escapeHtml(characterLabel(profile))} under spel</h2>
             ${resourceMarkup(values)}
@@ -350,72 +362,97 @@
 
   function listRows(list, key) {
     if (!list.length) return '<p class="dice-empty">Inga poster inlagda.</p>';
-    return list.map((entry, index) => `<div class="editable-list-row">
-      <input type="text" value="${app.escapeHtml(entry.name)}" data-list-field="name" data-list-key="${key}" data-index="${index}" placeholder="Namn">
-      <input type="text" value="${app.escapeHtml(entry.notes)}" data-list-field="notes" data-list-key="${key}" data-index="${index}" placeholder="Anteckning">
-      <button class="icon-button" type="button" data-delete-list="${key}" data-index="${index}">Ta bort</button>
-    </div>`).join('');
+    return list.map((entry, index) => {
+      const metaFields = key === 'abilities'
+        ? `
+          <label class="field"><span>VP-kostnad / användning</span><input type="text" value="${app.escapeHtml(entry.cost || '')}" data-list-field="cost" data-list-key="${key}" data-index="${index}" placeholder="Exempel: 3 VP eller en gång per spelpass"></label>
+          <label class="field"><span>Krav / utlösare</span><input type="text" value="${app.escapeHtml(entry.requirement || '')}" data-list-field="requirement" data-list-key="${key}" data-index="${index}" placeholder="Exempel: Hoppa & klättra 12 eller anfall bakifrån"></label>`
+        : `
+          <label class="field"><span>VP-kostnad</span><input type="text" value="${app.escapeHtml(entry.cost || '')}" data-list-field="cost" data-list-key="${key}" data-index="${index}" placeholder="Exempel: 2 VP"></label>
+          <label class="field"><span>Räckvidd</span><input type="text" value="${app.escapeHtml(entry.range || '')}" data-list-field="range" data-list-key="${key}" data-index="${index}" placeholder="Exempel: 10 meter eller synhåll"></label>
+          <label class="field"><span>Varaktighet</span><input type="text" value="${app.escapeHtml(entry.duration || '')}" data-list-field="duration" data-list-key="${key}" data-index="${index}" placeholder="Exempel: Omedelbar eller en runda"></label>`;
+      const descriptionLabel = key === 'abilities'
+        ? 'Fullständig effekt och hur förmågan används'
+        : 'Fullständig effekt, begränsningar och övriga regler';
+      return `<article class="detailed-list-row">
+        <div class="detailed-list-head">
+          <label class="field detailed-list-name"><span>Namn</span><input type="text" value="${app.escapeHtml(entry.name)}" data-list-field="name" data-list-key="${key}" data-index="${index}" placeholder="Namn"></label>
+          <button class="icon-button" type="button" data-delete-list="${key}" data-index="${index}">Ta bort</button>
+        </div>
+        <div class="ability-meta-grid">${metaFields}</div>
+        <label class="field"><span>${descriptionLabel}</span><textarea rows="7" data-list-field="notes" data-list-key="${key}" data-index="${index}" placeholder="Skriv hela regeltexten eller din egen sammanfattning här…">${app.escapeHtml(entry.notes)}</textarea></label>
+      </article>`;
+    }).join('');
   }
 
   function renderSheet(ctx, visuals) {
     const values = ctx.values;
     const marked = [...values.skills, ...values.weaponSkills, ...values.secondarySkills].filter((skill) => skill.experience).length;
     return `
-      <div class="party-content-grid character-sheet-layout">
-        <div class="party-main-column">
-          <div id="party-dice-panel"></div>
-          <article class="card">
-            <div class="skill-toolbar"><div><p class="eyebrow">Karaktärsblad</p><h2>Grundegenskaper och resurser</h2></div></div>
-            <div class="attribute-edit-grid">${Object.entries(ATTRIBUTE_LABELS).map(([key, label]) => `<label class="field"><span>${label}</span><input type="number" min="0" max="30" value="${values.attributes[key]}" data-attribute="${key}"></label>`).join('')}</div>
-            <div class="derived-edit-grid">
-              <label class="field"><span>Förflyttning</span><input type="number" min="0" max="99" value="${app.escapeHtml(values.derived.movement)}" data-derived="movement"></label>
-              <label class="field"><span>STY-skadebonus</span><input type="text" value="${app.escapeHtml(values.derived.strengthDamage)}" data-derived="strengthDamage"></label>
-              <label class="field"><span>SMI-skadebonus</span><input type="text" value="${app.escapeHtml(values.derived.agilityDamage)}" data-derived="agilityDamage"></label>
-              <label class="field"><span>KP nu</span><input type="number" min="0" max="999" value="${app.escapeHtml(values.derived.hpCurrent)}" data-derived="hpCurrent"></label>
-              <label class="field"><span>KP max</span><input type="number" min="0" max="999" value="${app.escapeHtml(values.derived.hpMax)}" data-derived="hpMax"></label>
-              <label class="field"><span>VP nu</span><input type="number" min="0" max="999" value="${app.escapeHtml(values.derived.wpCurrent)}" data-derived="wpCurrent"></label>
-              <label class="field"><span>VP max</span><input type="number" min="0" max="999" value="${app.escapeHtml(values.derived.wpMax)}" data-derived="wpMax"></label>
-            </div>
-            <div class="condition-grid">${Object.entries(CONDITION_LABELS).map(([key, label]) => `<label class="condition"><input type="checkbox" ${values.conditions[key] ? 'checked' : ''} data-condition="${key}"><span>${label}</span></label>`).join('')}</div>
-          </article>
-
-          <article class="card party-values-card">
-            <div class="skill-toolbar"><div><p class="eyebrow">Färdigheter</p><h2>Slag och erfarenhet</h2><p class="experience-summary">${marked ? `${marked} markerade för höjning` : 'Ingen färdighet markerad ännu'}</p></div></div>
-            <div class="party-skill-section-grid">
-              <section><div class="subsection-head compact"><h3>Grundfärdigheter</h3><button class="btn btn-small btn-ghost" type="button" data-add-skill="skills">+ Lägg till</button></div><div class="skill-list">${skillRows(values.skills, 'skills')}</div></section>
-              <section><div class="subsection-head compact"><h3>Vapenfärdigheter</h3><button class="btn btn-small btn-ghost" type="button" data-add-skill="weaponSkills">+ Lägg till</button></div><div class="skill-list">${skillRows(values.weaponSkills, 'weaponSkills')}</div></section>
-              <section><div class="subsection-head compact"><h3>Sekundära färdigheter</h3><button class="btn btn-small btn-ghost" type="button" data-add-skill="secondarySkills">+ Lägg till</button></div><div class="skill-list">${skillRows(values.secondarySkills, 'secondarySkills')}</div></section>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="skill-toolbar"><div><p class="eyebrow">Strid</p><h2>Vapen</h2></div><button class="btn btn-small btn-ghost" type="button" data-add-weapon>+ Vapen</button></div>
-            <div class="table-wrap"><table class="party-weapon-table"><thead><tr><th>Vapen</th><th>Färdighet</th><th>Skada</th><th>Egenskaper</th><th>Attack</th><th>Skada</th><th></th></tr></thead><tbody>
-              ${values.weapons.length ? values.weapons.map((weapon, index) => `<tr>
-                <td><input type="text" value="${app.escapeHtml(weapon.name)}" data-weapon-field="name" data-index="${index}"></td>
-                <td><input type="text" value="${app.escapeHtml(weapon.skill)}" data-weapon-field="skill" data-index="${index}"></td>
-                <td><input type="text" value="${app.escapeHtml(weapon.damage)}" data-weapon-field="damage" data-index="${index}"></td>
-                <td><input type="text" value="${app.escapeHtml(weapon.properties)}" data-weapon-field="properties" data-index="${index}"></td>
-                <td><button class="btn btn-small btn-ghost" type="button" data-roll-attack="${index}">Slå</button></td>
-                <td><button class="btn btn-small btn-secondary" type="button" data-roll-damage="${index}">Slå</button></td>
-                <td><button class="icon-button" type="button" data-delete-weapon="${index}">Ta bort</button></td>
-              </tr>`).join('') : '<tr><td colspan="7"><div class="empty-state">Inga vapen inlagda.</div></td></tr>'}
-            </tbody></table></div>
-          </article>
-
-          <div class="grid grid-2">
-            <article class="card"><div class="skill-toolbar"><div><p class="eyebrow">Förmågor</p><h2>Hjälteförmågor</h2></div><button class="btn btn-small btn-ghost" type="button" data-add-list="abilities">+ Lägg till</button></div><div class="editable-list">${listRows(values.abilities, 'abilities')}</div></article>
-            <article class="card"><div class="skill-toolbar"><div><p class="eyebrow">Magi och trick</p><h2>Besvärjelser / trick</h2></div><button class="btn btn-small btn-ghost" type="button" data-add-list="tricks">+ Lägg till</button></div><div class="editable-list">${listRows(values.tricks, 'tricks')}</div></article>
+      <div class="character-sheet-workspace">
+        <article class="card">
+          <div class="skill-toolbar"><div><p class="eyebrow">Karaktärsblad</p><h2>Grundegenskaper och resurser</h2></div></div>
+          <div class="attribute-edit-grid">${Object.entries(ATTRIBUTE_LABELS).map(([key, label]) => `<label class="field"><span>${label}</span><input type="number" min="0" max="30" value="${values.attributes[key]}" data-attribute="${key}"></label>`).join('')}</div>
+          <div class="derived-edit-grid">
+            <label class="field"><span>Förflyttning</span><input type="number" min="0" max="99" value="${app.escapeHtml(values.derived.movement)}" data-derived="movement"></label>
+            <label class="field"><span>STY-skadebonus</span><input type="text" value="${app.escapeHtml(values.derived.strengthDamage)}" data-derived="strengthDamage"></label>
+            <label class="field"><span>SMI-skadebonus</span><input type="text" value="${app.escapeHtml(values.derived.agilityDamage)}" data-derived="agilityDamage"></label>
+            <label class="field"><span>KP nu</span><input type="number" min="0" max="999" value="${app.escapeHtml(values.derived.hpCurrent)}" data-derived="hpCurrent"></label>
+            <label class="field"><span>KP max</span><input type="number" min="0" max="999" value="${app.escapeHtml(values.derived.hpMax)}" data-derived="hpMax"></label>
+            <label class="field"><span>VP nu</span><input type="number" min="0" max="999" value="${app.escapeHtml(values.derived.wpCurrent)}" data-derived="wpCurrent"></label>
+            <label class="field"><span>VP max</span><input type="number" min="0" max="999" value="${app.escapeHtml(values.derived.wpMax)}" data-derived="wpMax"></label>
           </div>
-        </div>
-        <aside class="party-side-column">
-          ${armorCardMarkup(ctx.profile)}
-          <article class="card character-sheet-card"><p class="eyebrow">Originalblad</p><h2>${app.escapeHtml(visuals.sheetName)}</h2>
-            ${visuals.sheetUrl && visuals.sheetIsPdf ? `<object class="party-sheet-pdf" data="${visuals.sheetUrl}" type="application/pdf"><p>PDF-filen kan inte visas här. <a href="${visuals.sheetUrl}" target="_blank" rel="noopener">Öppna karaktärsbladet</a>.</p></object><a class="btn btn-secondary" href="${visuals.sheetUrl}" target="_blank" rel="noopener">Öppna PDF i ny flik</a>` : ''}
-            ${visuals.sheetUrl && !visuals.sheetIsPdf ? `<a href="${visuals.sheetUrl}" target="_blank" rel="noopener"><img class="party-sheet-image" src="${visuals.sheetUrl}" alt="Karaktärsblad för ${app.escapeHtml(ctx.profile.name)}"></a>` : ''}
-            ${!visuals.sheetUrl ? '<div class="empty-state">Ladda upp en PDF eller bild via Redigera grunduppgifter.</div>' : ''}
-          </article>
-        </aside>
+          <div class="condition-grid">${Object.entries(CONDITION_LABELS).map(([key, label]) => `<label class="condition"><input type="checkbox" ${values.conditions[key] ? 'checked' : ''} data-condition="${key}"><span>${label}</span></label>`).join('')}</div>
+        </article>
+
+        <div class="sheet-armor-row">${armorCardMarkup(ctx.profile)}</div>
+
+        <article class="card party-values-card">
+          <div class="skill-toolbar"><div><p class="eyebrow">Färdigheter</p><h2>Slag och erfarenhet</h2><p class="experience-summary">${marked ? `${marked} markerade för höjning` : 'Ingen färdighet markerad ännu'}</p></div></div>
+          <div class="party-skill-section-grid">
+            <section><div class="subsection-head compact"><h3>Grundfärdigheter</h3><button class="btn btn-small btn-ghost" type="button" data-add-skill="skills">+ Lägg till</button></div><div class="skill-list">${skillRows(values.skills, 'skills')}</div></section>
+            <section><div class="subsection-head compact"><h3>Vapenfärdigheter</h3><button class="btn btn-small btn-ghost" type="button" data-add-skill="weaponSkills">+ Lägg till</button></div><div class="skill-list">${skillRows(values.weaponSkills, 'weaponSkills')}</div></section>
+            <section><div class="subsection-head compact"><h3>Sekundära färdigheter</h3><button class="btn btn-small btn-ghost" type="button" data-add-skill="secondarySkills">+ Lägg till</button></div><div class="skill-list">${skillRows(values.secondarySkills, 'secondarySkills')}</div></section>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="skill-toolbar"><div><p class="eyebrow">Strid</p><h2>Vapen</h2></div><button class="btn btn-small btn-ghost" type="button" data-add-weapon>+ Vapen</button></div>
+          <div class="table-wrap"><table class="party-weapon-table"><thead><tr><th>Vapen</th><th>Färdighet</th><th>Skada</th><th>Egenskaper</th><th>Attack</th><th>Skada</th><th></th></tr></thead><tbody>
+            ${values.weapons.length ? values.weapons.map((weapon, index) => `<tr>
+              <td><input type="text" value="${app.escapeHtml(weapon.name)}" data-weapon-field="name" data-index="${index}"></td>
+              <td><input type="text" value="${app.escapeHtml(weapon.skill)}" data-weapon-field="skill" data-index="${index}"></td>
+              <td><input type="text" value="${app.escapeHtml(weapon.damage)}" data-weapon-field="damage" data-index="${index}"></td>
+              <td><input type="text" value="${app.escapeHtml(weapon.properties)}" data-weapon-field="properties" data-index="${index}"></td>
+              <td><button class="btn btn-small btn-ghost" type="button" data-roll-attack="${index}">Slå</button></td>
+              <td><button class="btn btn-small btn-secondary" type="button" data-roll-damage="${index}">Slå</button></td>
+              <td><button class="icon-button" type="button" data-delete-weapon="${index}">Ta bort</button></td>
+            </tr>`).join('') : '<tr><td colspan="7"><div class="empty-state">Inga vapen inlagda.</div></td></tr>'}
+          </tbody></table></div>
+        </article>
+
+        <article class="card detailed-section-card">
+          <div class="skill-toolbar"><div><p class="eyebrow">Förmågor</p><h2>Hjälteförmågor</h2><p class="small muted">Varje förmåga har nu ett eget stort textfält så att hela regeltexten kan ligga synlig.</p></div><button class="btn btn-small btn-ghost" type="button" data-add-list="abilities">+ Lägg till</button></div>
+          <div class="detailed-editable-list">${listRows(values.abilities, 'abilities')}</div>
+        </article>
+
+        <article class="card detailed-section-card">
+          <div class="skill-toolbar"><div><p class="eyebrow">Magi och trick</p><h2>Besvärjelser / trick</h2><p class="small muted">Skriv kostnad, räckvidd, varaktighet och hela effekten utan att texten kläms ihop.</p></div><button class="btn btn-small btn-ghost" type="button" data-add-list="tricks">+ Lägg till</button></div>
+          <div class="detailed-editable-list">${listRows(values.tricks, 'tricks')}</div>
+        </article>
+
+        <article class="card sheet-free-text-card">
+          <p class="eyebrow">Fritext</p><h2>Egna anteckningar på karaktärsbladet</h2>
+          <p class="small muted">Detta är ett stort fritt arbetsfält för sådant som inte passar i de fasta rutorna.</p>
+          <label class="field"><span>Fritext</span><textarea rows="12" data-sheet-notes placeholder="Kontakter, regler, tillfälliga effekter, utrustningsdetaljer eller annat du vill kunna skriva fritt…">${app.escapeHtml(values.sheetNotes || '')}</textarea></label>
+        </article>
+
+        <article class="card character-sheet-card character-original-sheet">
+          <div class="original-sheet-heading"><div><p class="eyebrow">Originalblad</p><h2>${app.escapeHtml(visuals.sheetName)}</h2><p class="small muted">Originalbladet visas i full bredd och ligger inte längre bakom rustningsrutan.</p></div>${visuals.sheetUrl ? `<a class="btn btn-secondary" href="${visuals.sheetUrl}" target="_blank" rel="noopener">Öppna i egen flik</a>` : ''}</div>
+          ${visuals.sheetUrl && visuals.sheetIsPdf ? `<object class="party-sheet-pdf party-sheet-pdf-full" data="${visuals.sheetUrl}" type="application/pdf"><p>PDF-filen kan inte visas här. <a href="${visuals.sheetUrl}" target="_blank" rel="noopener">Öppna karaktärsbladet</a>.</p></object>` : ''}
+          ${visuals.sheetUrl && !visuals.sheetIsPdf ? `<a href="${visuals.sheetUrl}" target="_blank" rel="noopener"><img class="party-sheet-image" src="${visuals.sheetUrl}" alt="Karaktärsblad för ${app.escapeHtml(ctx.profile.name)}"></a>` : ''}
+          ${!visuals.sheetUrl ? '<div class="empty-state">Ladda upp en PDF eller bild via Redigera grunduppgifter.</div>' : ''}
+        </article>
       </div>`;
   }
 
@@ -480,6 +517,67 @@
       }).join('') : '<div class="empty-state"><h3>Journalen är tom</h3><p>Här kan spelaren samla händelser, ledtrådar och misstankar.</p></div>'}</div>`;
   }
 
+  function combatSnapshot(ctx) {
+    const derived = ctx.values.derived;
+    const armor = app.armorDetails(ctx.profile.armor);
+    const activeConditions = Object.entries(CONDITION_LABELS)
+      .filter(([key]) => ctx.values.conditions[key])
+      .map(([, label]) => label);
+    return {
+      hpCurrent: app.clamp(derived.hpCurrent, 0, 999),
+      hpMax: app.clamp(derived.hpMax, 0, 999),
+      wpCurrent: app.clamp(derived.wpCurrent, 0, 999),
+      wpMax: app.clamp(derived.wpMax, 0, 999),
+      armor: armor.baseProtection,
+      armorCrush: app.armorDetails(ctx.profile.armor, 'kross').effectiveProtection,
+      armorSlash: app.armorDetails(ctx.profile.armor, 'hugg').effectiveProtection,
+      conditions: activeConditions
+    };
+  }
+
+  function quickSkillOptions(ctx) {
+    return [
+      ...ctx.values.skills.map((skill) => ({ ...skill, group: 'Grundfärdighet' })),
+      ...ctx.values.weaponSkills.map((skill) => ({ ...skill, group: 'Vapenfärdighet' })),
+      ...ctx.values.secondarySkills.map((skill) => ({ ...skill, group: 'Sekundär färdighet' }))
+    ].filter((skill) => skill.name);
+  }
+
+  function quickWeaponOptions(ctx) {
+    return ctx.values.weapons
+      .map((weapon, index) => ({
+        index,
+        name: String(weapon.name || `Vapen ${index + 1}`),
+        skill: String(weapon.skill || ''),
+        target: findSkillValue(ctx.values, weapon.skill || weapon.name),
+        damage: String(weapon.damage || 'T6'),
+        properties: String(weapon.properties || '')
+      }))
+      .filter((weapon) => weapon.name);
+  }
+
+  function changeCombatResource(ctx, resource, action) {
+    const map = {
+      hp: ['hpCurrent', 'hpMax', 'Kroppspoäng'],
+      wp: ['wpCurrent', 'wpMax', 'Viljepoäng']
+    };
+    const entry = map[resource];
+    if (!entry) return combatSnapshot(ctx);
+    const [currentKey, maxKey, label] = entry;
+    const maximum = app.clamp(ctx.values.derived[maxKey], 0, 999);
+    if (action === 'reset') {
+      ctx.values.derived[currentKey] = maximum;
+    } else {
+      const upper = maximum > 0 ? maximum : 999;
+      const nextValue = action && typeof action === 'object' && Object.prototype.hasOwnProperty.call(action, 'set')
+        ? Number(action.set)
+        : Number(ctx.values.derived[currentKey] || 0) + Number(action || 0);
+      ctx.values.derived[currentKey] = app.clamp(nextValue, 0, upper);
+    }
+    saveAndTouch(ctx, `${label} uppdaterade`);
+    return combatSnapshot(ctx);
+  }
+
   async function renderCharacter() {
     const ctx = getContext();
     if (!ctx) return selectCharacter(ALVAR_ID, 'overview');
@@ -494,12 +592,19 @@
     else if (activeView === 'inventory') viewMarkup = renderInventory(ctx);
     else if (activeView === 'journal') viewMarkup = renderJournal(ctx);
     else viewMarkup = renderOverview(ctx);
-    content.innerHTML = profileHeader(ctx, visuals) + renderSectionTabs(ctx) + `<div class="character-section-content">${viewMarkup}</div>`;
+    content.innerHTML = profileHeader(ctx, visuals) + renderSectionTabs(ctx) + `<div class="character-section-content">${viewMarkup}</div><div id="party-dice-panel" class="no-print"></div>`;
     bindCharacterUi(ctx);
-    if (['overview', 'sheet'].includes(activeView)) {
-      diceController = window.DodDice?.mount('party-dice-panel', { characterKey: () => ctx.id, characterName: () => characterLabel(ctx.profile), player: () => ctx.profile.player }) || null;
-      bindRollUi(ctx);
-    }
+    diceController = window.DodDice?.mount('party-dice-panel', {
+      characterKey: () => ctx.id,
+      characterName: () => characterLabel(ctx.profile),
+      player: () => ctx.profile.player,
+      layout: 'dock',
+      combat: () => combatSnapshot(ctx),
+      skills: () => quickSkillOptions(ctx),
+      weapons: () => quickWeaponOptions(ctx),
+      changeResource: (resource, action) => changeCombatResource(ctx, resource, action)
+    }) || null;
+    if (activeView === 'sheet') bindRollUi(ctx);
   }
 
   function findSkillValue(values, name) {
@@ -509,6 +614,11 @@
     if (exact) return exact.value;
     const partial = all.find((skill) => normalized && (skill.name.toLowerCase().includes(normalized) || normalized.includes(skill.name.toLowerCase())));
     return partial ? partial.value : null;
+  }
+
+  function scheduleAutosave(ctx, message = 'Texten sparad') {
+    window.clearTimeout(autosaveTimer);
+    autosaveTimer = window.setTimeout(() => saveAndTouch(ctx, message), 350);
   }
 
   function saveAndTouch(ctx, message) {
@@ -558,7 +668,7 @@
     container.querySelectorAll('[data-derived]').forEach((input) => input.addEventListener('change', () => {
       const key = input.dataset.derived;
       ctx.values.derived[key] = ['strengthDamage','agilityDamage'].includes(key) ? input.value.trim() : app.clamp(input.value, 0, 999);
-      input.value = ctx.values.derived[key]; saveAndTouch(ctx, 'Spelvärdet uppdaterat');
+      input.value = ctx.values.derived[key]; saveAndTouch(ctx, 'Spelvärdet uppdaterat'); diceController?.refresh();
     }));
     container.querySelectorAll('[data-condition]').forEach((input) => input.addEventListener('change', () => { ctx.values.conditions[input.dataset.condition] = input.checked; saveAndTouch(ctx, 'Tillståndet uppdaterat'); }));
     container.querySelectorAll('[data-skill-field]').forEach((input) => input.addEventListener('change', () => {
@@ -585,8 +695,23 @@
       ctx.values.weapons.push({ name: name.trim(), skill: skill.trim(), grip: '', range: '', damage: damage.trim(), durability: '', properties: '' }); saveAndTouch(ctx, 'Vapen tillagt'); await renderCharacter();
     });
     container.querySelectorAll('[data-delete-weapon]').forEach((button) => button.addEventListener('click', async () => { const index = Number(button.dataset.deleteWeapon); if (confirm(`Ta bort ${ctx.values.weapons[index]?.name || 'vapnet'}?`)) { ctx.values.weapons.splice(index, 1); saveAndTouch(ctx, 'Vapen borttaget'); await renderCharacter(); } }));
-    container.querySelectorAll('[data-list-field]').forEach((input) => input.addEventListener('change', () => { ctx.values[input.dataset.listKey][Number(input.dataset.index)][input.dataset.listField] = input.value.trim(); saveAndTouch(ctx, 'Listan uppdaterad'); }));
-    container.querySelectorAll('[data-add-list]').forEach((button) => button.addEventListener('click', async () => { const name = prompt('Vad heter posten?'); if (!name?.trim()) return; ctx.values[button.dataset.addList].push({ name: name.trim(), notes: '' }); saveAndTouch(ctx, 'Post tillagd'); await renderCharacter(); }));
+    container.querySelector('[data-sheet-notes]')?.addEventListener('input', (event) => {
+      ctx.values.sheetNotes = event.currentTarget.value;
+      scheduleAutosave(ctx, 'Fritexten på karaktärsbladet sparad');
+    });
+    container.querySelectorAll('[data-list-field]').forEach((input) => input.addEventListener('input', () => {
+      ctx.values[input.dataset.listKey][Number(input.dataset.index)][input.dataset.listField] = input.value;
+      scheduleAutosave(ctx, 'Förmågan eller besvärjelsen sparad');
+    }));
+    container.querySelectorAll('[data-add-list]').forEach((button) => button.addEventListener('click', async () => {
+      const name = prompt('Vad heter posten?'); if (!name?.trim()) return;
+      const entry = button.dataset.addList === 'abilities'
+        ? { name: name.trim(), cost: '', requirement: '', notes: '' }
+        : { name: name.trim(), cost: '', range: '', duration: '', notes: '' };
+      ctx.values[button.dataset.addList].push(entry);
+      saveAndTouch(ctx, 'Post tillagd');
+      await renderCharacter();
+    }));
     container.querySelectorAll('[data-delete-list]').forEach((button) => button.addEventListener('click', async () => { const list = ctx.values[button.dataset.deleteList]; const index = Number(button.dataset.index); if (confirm(`Ta bort ${list[index]?.name || 'posten'}?`)) { list.splice(index, 1); saveAndTouch(ctx, 'Post borttagen'); await renderCharacter(); } }));
   }
 
@@ -736,5 +861,9 @@
   document.addEventListener('DOMContentLoaded', async () => {
     bindUi(); renderTabs(); const hash = parseHash(); if (hash.id === 'new') openEditor(); else await selectCharacter(hash.id, hash.view);
   });
-  window.addEventListener('beforeunload', () => { clearObjectUrls(); diceController?.destroy(); });
+  window.addEventListener('beforeunload', () => {
+    if (autosaveTimer) app.saveState('Texten sparad');
+    clearObjectUrls();
+    diceController?.destroy();
+  });
 })();

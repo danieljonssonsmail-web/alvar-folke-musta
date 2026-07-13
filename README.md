@@ -1,6 +1,6 @@
 # Äventyrargruppen – Drakar och Demoner
 
-En statisk GitHub Pages-sajt för gruppens karaktärer. Version 7 gör Alvar/Folke och alla medspelarkaraktärer till likvärdiga karaktärer i samma portal.
+En statisk GitHub Pages-sajt för gruppens karaktärer. Version 8 gör karaktärsbladet luftigare och samlar strid, KP, VP och tärningsslag i en fast spelrad längst ned på skärmen.
 
 ## Det som finns
 
@@ -11,10 +11,15 @@ En statisk GitHub Pages-sajt för gruppens karaktärer. Version 7 gör Alvar/Fol
   - Bakgrund
   - Inventory
   - Journal
-- Privata och offentliga tärningsslag.
+- En fast spelrad som alltid är synlig på karaktärssidan, med KP, VP, rustningsskydd, vapen och privata/offentliga slag.
+- KP och VP kan minskas, ökas, skrivas in direkt eller återställas till max utan att lämna den aktuella platsen på sidan.
+- Vapenattack och vapenskada kan slås direkt i spelraden; alla färdigheter finns i den utfällbara slagpanelen.
 - Slag för färdigheter, vapenattacker, vapenskada och valfria tärningar.
 - Erfarenhetsruta framför varje färdighet.
-- Redigerbara grundegenskaper, resurser, tillstånd, färdigheter, vapen, förmågor och trick.
+- Redigerbara grundegenskaper, resurser, tillstånd, färdigheter och vapen.
+- Utförliga kort för hjälteförmågor och besvärjelser/trick med kostnad, krav, räckvidd, varaktighet och stora effektfält.
+- Ett stort fritextfält som autosparas medan spelaren skriver.
+- Originalblad i full bredd utan överlappande rustningsruta.
 - Rustning, hjälm, skyddsvärde och rustningsregler.
 - Uppladdning av porträtt och originalblad som PDF eller bild.
 - Gemensamt initiativbord med initiativkort 1–10.
@@ -44,7 +49,7 @@ Offentliga tärningsslag och initiativ använder gruppkoden och en extern MQTT-a
 3. Välj **Repository → Show in Explorer**.
 4. Kopiera innehållet från uppdateringsmappen till repositorymappen.
 5. Välj **Ersätt filer**.
-6. Skriv exempelvis `Kompletta karaktärssidor för hela gruppen`.
+6. Skriv exempelvis `Förbättra karaktärsblad och tärningsdocka`.
 7. Klicka **Commit to main**.
 8. Klicka **Push origin**.
 

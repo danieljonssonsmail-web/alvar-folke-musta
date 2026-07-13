@@ -368,80 +368,290 @@
     if (!container) return null;
     const state = diceState();
     const character = entryContext(context);
+    const dockMode = context?.layout === 'dock';
+    let lastEntry = null;
 
-    container.innerHTML = `
-      <article class="card dice-card">
-        <div class="dice-header">
-          <div>
-            <p class="eyebrow">Tärningsbord</p>
-            <h2>Slå som ${app.escapeHtml(character.characterName)}</h2>
-            <p class="muted">Välj privat för ett slag som bara sparas på den här enheten, eller offentligt för gruppens gemensamma logg.</p>
-          </div>
-          <div class="dice-mode" role="group" aria-label="Vem ser slaget">
-            <button type="button" data-dice-mode="private">Privat</button>
-            <button type="button" data-dice-mode="public">Offentligt</button>
-          </div>
-        </div>
+    const readContextValue = (value, fallback) => {
+      try {
+        const result = typeof value === 'function' ? value() : value;
+        return result == null ? fallback : result;
+      } catch (error) {
+        console.warn(error);
+        return fallback;
+      }
+    };
+    const combatData = () => {
+      const raw = readContextValue(context?.combat, {}) || {};
+      return {
+        hpCurrent: Number(raw.hpCurrent) || 0,
+        hpMax: Number(raw.hpMax) || 0,
+        wpCurrent: Number(raw.wpCurrent) || 0,
+        wpMax: Number(raw.wpMax) || 0,
+        armor: Number(raw.armor) || 0,
+        armorCrush: Number(raw.armorCrush) || 0,
+        armorSlash: Number(raw.armorSlash) || 0,
+        conditions: Array.isArray(raw.conditions) ? raw.conditions.map(String) : []
+      };
+    };
+    const skillData = () => {
+      const list = readContextValue(context?.skills, []);
+      return (Array.isArray(list) ? list : []).map((skill) => ({
+        name: String(skill?.name || 'Färdighet'),
+        value: skill?.value === null || skill?.value === undefined ? null : Number(skill.value),
+        group: String(skill?.group || '')
+      }));
+    };
+    const weaponData = () => {
+      const list = readContextValue(context?.weapons, []);
+      return (Array.isArray(list) ? list : []).map((weapon) => ({
+        name: String(weapon?.name || 'Vapen'),
+        skill: String(weapon?.skill || ''),
+        target: weapon?.target === null || weapon?.target === undefined ? null : Number(weapon.target),
+        damage: String(weapon?.damage || 'T6'),
+        properties: String(weapon?.properties || '')
+      }));
+    };
 
-        <div class="dice-quick" aria-label="Snabba tärningar">
-          ${[4, 6, 8, 10, 12, 20, 100].map((sides) => `<button class="die-button" type="button" data-quick-die="${sides}">T${sides}</button>`).join('')}
-        </div>
-
-        <form class="dice-custom-form">
-          <label class="field"><span>Antal</span><input name="count" type="number" min="1" max="20" value="1"></label>
-          <label class="field"><span>Tärning</span><input name="sides" type="number" min="2" max="1000" value="6"></label>
-          <label class="field"><span>Modifikation</span><input name="modifier" type="number" min="-999" max="999" value="0"></label>
-          <label class="field dice-label-field"><span>Vad gäller slaget?</span><input name="label" type="text" placeholder="Exempel: Slumpmöte eller giftets varaktighet"></label>
-          <button class="btn btn-secondary" type="submit">Slå valfri tärning</button>
-        </form>
-
-        <div class="dice-public-settings">
-          <label class="field dice-room-field"><span>Gruppkod för offentliga slag</span><input data-dice-room type="text" value="${app.escapeHtml(state.roomCode)}" maxlength="80"></label>
-          <button class="btn btn-small btn-ghost" type="button" data-copy-room>Kopiera kod</button>
-          <span class="dice-status" data-dice-status></span>
-        </div>
-
-        <div class="dice-log-grid">
-          <section class="dice-log-panel">
-            <div class="dice-log-heading">
-              <div><p class="eyebrow">Bara här</p><h3>Privata slag</h3></div>
-              <button class="btn btn-small btn-ghost" type="button" data-clear-private>Rensa</button>
+    if (dockMode) {
+      document.body.classList.add('dice-dock-active');
+      container.classList.add('dice-dock-host');
+      container.innerHTML = `
+        <article class="dice-dock-card" aria-label="Spelrad för ${app.escapeHtml(character.characterName)}">
+          <div class="dice-dock-main">
+            <div class="dice-dock-character">
+              <span>Spelrad</span>
+              <strong>${app.escapeHtml(character.characterName)}</strong>
             </div>
-            <div data-private-log></div>
-          </section>
-          <section class="dice-log-panel public-log-panel">
-            <div class="dice-log-heading">
-              <div><p class="eyebrow">Gruppen</p><h3>Offentliga slag</h3></div>
+
+            <div class="combat-resource-strip" aria-label="Kroppspoäng och viljepoäng">
+              <div class="combat-resource" data-combat-resource="hp">
+                <span>KP</span>
+                <button type="button" data-resource-change="hp" data-resource-action="-1" aria-label="Minska kroppspoäng med ett">−</button>
+                <button class="combat-resource-value" type="button" data-resource-edit="hp" aria-label="Skriv in kroppspoäng"><strong data-resource-value="hp">0/0</strong></button>
+                <button type="button" data-resource-change="hp" data-resource-action="1" aria-label="Öka kroppspoäng med ett">+</button>
+                <button class="combat-resource-reset" type="button" data-resource-reset="hp" aria-label="Återställ kroppspoäng">Full</button>
+              </div>
+              <div class="combat-resource" data-combat-resource="wp">
+                <span>VP</span>
+                <button type="button" data-resource-change="wp" data-resource-action="-1" aria-label="Minska viljepoäng med ett">−</button>
+                <button class="combat-resource-value" type="button" data-resource-edit="wp" aria-label="Skriv in viljepoäng"><strong data-resource-value="wp">0/0</strong></button>
+                <button type="button" data-resource-change="wp" data-resource-action="1" aria-label="Öka viljepoäng med ett">+</button>
+                <button class="combat-resource-reset" type="button" data-resource-reset="wp" aria-label="Återställ viljepoäng">Full</button>
+              </div>
             </div>
-            <div data-public-log></div>
-          </section>
-        </div>
-      </article>
-    `;
+
+            <div class="combat-armor-chip" title="Normalt skydd från rustning">
+              <span>Skydd</span><strong data-combat-armor>0</strong>
+            </div>
+
+            <div class="dice-mode dice-mode-compact" role="group" aria-label="Vem ser slaget">
+              <button type="button" data-dice-mode="private">Privat</button>
+              <button type="button" data-dice-mode="public">Offentligt</button>
+            </div>
+
+            <div class="combat-weapon-quick" aria-label="Snabbt vapenslag">
+              <select data-quick-weapon aria-label="Välj vapen"></select>
+              <button class="btn btn-small btn-ghost" type="button" data-roll-weapon-attack>Attack</button>
+              <button class="btn btn-small btn-secondary" type="button" data-roll-weapon-damage>Skada</button>
+            </div>
+
+            <div class="dice-quick dice-quick-dock" aria-label="Snabba tärningar">
+              ${[4, 6, 8, 10, 12, 20].map((sides) => `<button class="die-button" type="button" data-quick-die="${sides}">T${sides}</button>`).join('')}
+            </div>
+
+            <div class="dice-dock-latest" data-dice-latest aria-live="polite"></div>
+            <button class="btn btn-small btn-ghost dice-dock-expand" type="button" data-dice-expand aria-expanded="false">Strid & slag</button>
+          </div>
+
+          <div class="dice-dock-drawer" data-dice-drawer hidden>
+            <div class="dice-tool-grid">
+              <section class="dice-tool-panel">
+                <p class="eyebrow">Färdighetsslag</p>
+                <h3>Slå utan att leta i bladet</h3>
+                <div class="dice-select-action">
+                  <select data-quick-skill aria-label="Välj färdighet"></select>
+                  <button class="btn btn-secondary" type="button" data-roll-selected-skill>Slå T20</button>
+                </div>
+                <div class="combat-status-summary">
+                  <span><b>Rustning:</b> <span data-combat-protection></span></span>
+                  <span><b>Tillstånd:</b> <span data-combat-conditions></span></span>
+                </div>
+              </section>
+
+              <section class="dice-tool-panel">
+                <p class="eyebrow">Valfri tärning</p>
+                <h3>Antal, sidor och modifikation</h3>
+                <div class="dice-quick dice-quick-drawer">
+                  ${[4, 6, 8, 10, 12, 20, 100].map((sides) => `<button class="die-button" type="button" data-quick-die="${sides}">T${sides}</button>`).join('')}
+                </div>
+                <form class="dice-custom-form">
+                  <label class="field"><span>Antal</span><input name="count" type="number" min="1" max="20" value="1"></label>
+                  <label class="field"><span>Tärning</span><input name="sides" type="number" min="2" max="1000" value="6"></label>
+                  <label class="field"><span>Modifikation</span><input name="modifier" type="number" min="-999" max="999" value="0"></label>
+                  <label class="field dice-label-field"><span>Vad gäller slaget?</span><input name="label" type="text" placeholder="Exempel: Slumpmöte eller giftets varaktighet"></label>
+                  <button class="btn btn-secondary" type="submit">Slå</button>
+                </form>
+              </section>
+            </div>
+
+            <div class="dice-public-settings">
+              <label class="field dice-room-field"><span>Gruppkod för offentliga slag</span><input data-dice-room type="text" value="${app.escapeHtml(state.roomCode)}" maxlength="80"></label>
+              <button class="btn btn-small btn-ghost" type="button" data-copy-room>Kopiera kod</button>
+              <span class="dice-status" data-dice-status></span>
+            </div>
+            <div class="dice-log-grid dice-log-grid-dock">
+              <section class="dice-log-panel">
+                <div class="dice-log-heading"><div><p class="eyebrow">Bara här</p><h3>Privata slag</h3></div><button class="btn btn-small btn-ghost" type="button" data-clear-private>Rensa</button></div>
+                <div data-private-log></div>
+              </section>
+              <section class="dice-log-panel public-log-panel">
+                <div class="dice-log-heading"><div><p class="eyebrow">Gruppen</p><h3>Offentliga slag</h3></div></div>
+                <div data-public-log></div>
+              </section>
+            </div>
+          </div>
+        </article>`;
+    } else {
+      container.innerHTML = `
+        <article class="card dice-card">
+          <div class="dice-header">
+            <div>
+              <p class="eyebrow">Tärningsbord</p>
+              <h2>Slå som ${app.escapeHtml(character.characterName)}</h2>
+              <p class="muted">Välj privat för ett slag som bara sparas på den här enheten, eller offentligt för gruppens gemensamma logg.</p>
+            </div>
+            <div class="dice-mode" role="group" aria-label="Vem ser slaget">
+              <button type="button" data-dice-mode="private">Privat</button>
+              <button type="button" data-dice-mode="public">Offentligt</button>
+            </div>
+          </div>
+
+          <div class="dice-quick" aria-label="Snabba tärningar">
+            ${[4, 6, 8, 10, 12, 20, 100].map((sides) => `<button class="die-button" type="button" data-quick-die="${sides}">T${sides}</button>`).join('')}
+          </div>
+
+          <form class="dice-custom-form">
+            <label class="field"><span>Antal</span><input name="count" type="number" min="1" max="20" value="1"></label>
+            <label class="field"><span>Tärning</span><input name="sides" type="number" min="2" max="1000" value="6"></label>
+            <label class="field"><span>Modifikation</span><input name="modifier" type="number" min="-999" max="999" value="0"></label>
+            <label class="field dice-label-field"><span>Vad gäller slaget?</span><input name="label" type="text" placeholder="Exempel: Slumpmöte eller giftets varaktighet"></label>
+            <button class="btn btn-secondary" type="submit">Slå valfri tärning</button>
+          </form>
+
+          <div class="dice-public-settings">
+            <label class="field dice-room-field"><span>Gruppkod för offentliga slag</span><input data-dice-room type="text" value="${app.escapeHtml(state.roomCode)}" maxlength="80"></label>
+            <button class="btn btn-small btn-ghost" type="button" data-copy-room>Kopiera kod</button>
+            <span class="dice-status" data-dice-status></span>
+          </div>
+
+          <div class="dice-log-grid">
+            <section class="dice-log-panel">
+              <div class="dice-log-heading">
+                <div><p class="eyebrow">Bara här</p><h3>Privata slag</h3></div>
+                <button class="btn btn-small btn-ghost" type="button" data-clear-private>Rensa</button>
+              </div>
+              <div data-private-log></div>
+            </section>
+            <section class="dice-log-panel public-log-panel">
+              <div class="dice-log-heading"><div><p class="eyebrow">Gruppen</p><h3>Offentliga slag</h3></div></div>
+              <div data-public-log></div>
+            </section>
+          </div>
+        </article>`;
+    }
+
+    function currentLatest(current) {
+      const key = entryContext(context).characterKey;
+      if (lastEntry) return lastEntry;
+      if (current.mode === 'public') return current.publicLogs.at(-1) || null;
+      const privateEntries = Array.isArray(current.privateLogs[key]) ? current.privateLogs[key] : [];
+      return privateEntries.at(-1) || null;
+    }
+
+    function latestMarkup(entry) {
+      if (!entry) return '<span>Redo att slå</span><strong>–</strong>';
+      const visibility = diceState().mode === 'public' ? 'Offentligt' : 'Privat';
+      return `<span>${app.escapeHtml(visibility)} · ${app.escapeHtml(entry.label)}</span><strong>${app.escapeHtml(entry.total)}${entry.outcome ? ` · ${app.escapeHtml(entry.outcome)}` : ''}</strong>`;
+    }
+
+    function syncQuickSelects() {
+      const skillSelect = container.querySelector('[data-quick-skill]');
+      if (skillSelect) {
+        const selected = skillSelect.value;
+        const skills = skillData();
+        skillSelect.innerHTML = skills.length
+          ? skills.map((skill, index) => `<option value="${index}">${app.escapeHtml(skill.group ? `${skill.group}: ${skill.name} (${skill.value ?? '–'})` : `${skill.name} (${skill.value ?? '–'})`)}</option>`).join('')
+          : '<option value="">Inga färdigheter inlagda</option>';
+        if (selected && [...skillSelect.options].some((option) => option.value === selected)) skillSelect.value = selected;
+      }
+
+      const weaponSelect = container.querySelector('[data-quick-weapon]');
+      if (weaponSelect) {
+        const selected = weaponSelect.value;
+        const weapons = weaponData();
+        weaponSelect.innerHTML = weapons.length
+          ? weapons.map((weapon, index) => `<option value="${index}">${app.escapeHtml(`${weapon.name} · ${weapon.target ?? '–'} · ${weapon.damage}`)}</option>`).join('')
+          : '<option value="">Inga vapen</option>';
+        if (selected && [...weaponSelect.options].some((option) => option.value === selected)) weaponSelect.value = selected;
+      }
+    }
 
     function render() {
       const current = diceState();
+      syncQuickSelects();
+      const combat = combatData();
+      const hpValue = container.querySelector('[data-resource-value="hp"]');
+      const wpValue = container.querySelector('[data-resource-value="wp"]');
+      if (hpValue) hpValue.textContent = `${combat.hpCurrent}/${combat.hpMax}`;
+      if (wpValue) wpValue.textContent = `${combat.wpCurrent}/${combat.wpMax}`;
+      const armorValue = container.querySelector('[data-combat-armor]');
+      if (armorValue) armorValue.textContent = combat.armor;
+      const protection = container.querySelector('[data-combat-protection]');
+      if (protection) protection.textContent = `normal ${combat.armor}, kross ${combat.armorCrush}, hugg ${combat.armorSlash}`;
+      const conditions = container.querySelector('[data-combat-conditions]');
+      if (conditions) conditions.textContent = combat.conditions.length ? combat.conditions.join(', ') : 'inga aktiva';
       container.querySelectorAll('[data-dice-mode]').forEach((button) => {
         const active = button.dataset.diceMode === current.mode;
         button.classList.toggle('active', active);
         button.setAttribute('aria-pressed', String(active));
       });
       const roomInput = container.querySelector('[data-dice-room]');
-      if (document.activeElement !== roomInput) roomInput.value = current.roomCode;
-      const [text, className] = statusText();
+      if (roomInput && document.activeElement !== roomInput) roomInput.value = current.roomCode;
       const status = container.querySelector('[data-dice-status]');
-      status.className = `dice-status ${className}`;
-      status.textContent = `Offentlig synk: ${text}`;
+      if (status) {
+        const [text, className] = statusText();
+        status.className = `dice-status ${className}`;
+        status.textContent = `Offentlig synk: ${text}`;
+      }
       const key = entryContext(context).characterKey;
       const privateEntries = Array.isArray(current.privateLogs[key]) ? current.privateLogs[key] : [];
-      container.querySelector('[data-private-log]').innerHTML = logMarkup(privateEntries, 'Inga privata slag för den här karaktären ännu.');
-      container.querySelector('[data-public-log]').innerHTML = logMarkup(current.publicLogs, 'Inga offentliga slag har setts i gruppen ännu.', true);
+      const privateLog = container.querySelector('[data-private-log]');
+      const publicLog = container.querySelector('[data-public-log]');
+      if (privateLog) privateLog.innerHTML = logMarkup(privateEntries, 'Inga privata slag för den här karaktären ännu.');
+      if (publicLog) publicLog.innerHTML = logMarkup(current.publicLogs, 'Inga offentliga slag har setts i gruppen ännu.', true);
+      const latest = container.querySelector('[data-dice-latest]');
+      if (latest) latest.innerHTML = latestMarkup(currentLatest(current));
+    }
+
+    function announce(entry) {
+      lastEntry = entry;
+      render();
+      if (!entry) return entry;
+      const outcome = entry.outcome ? ` – ${entry.outcome}` : '';
+      app.showToast(`${entry.label}: ${entry.total}${outcome}`);
+      const latest = container.querySelector('[data-dice-latest]');
+      if (latest) {
+        latest.classList.remove('dice-result-flash');
+        void latest.offsetWidth;
+        latest.classList.add('dice-result-flash');
+      }
+      return entry;
     }
 
     function controllerRollSkill(label, target, kind = 'skill') {
       const pool = rollPool(1, 20, 0);
       const result = pool.dice[0].result;
-      return saveRoll(context, {
+      return announce(saveRoll(context, {
         label,
         kind,
         formula: 'T20',
@@ -450,35 +660,89 @@
         total: result,
         target: target === null || target === undefined || target === '' ? null : Number(target),
         outcome: skillOutcome(result, target)
-      });
+      }));
     }
 
     function controllerRollFormula(label, formula, kind = 'damage') {
       const rolled = parseAndRollFormula(formula);
-      return saveRoll(context, { label, kind, ...rolled, target: null, outcome: '' });
+      return announce(saveRoll(context, { label, kind, ...rolled, target: null, outcome: '' }));
+    }
+
+    function controllerRollCustom(label, count = 1, sides = 6, modifier = 0) {
+      const rolled = rollPool(count, sides, modifier);
+      return announce(saveRoll(context, { label: label || `Slumpmässigt ${rolled.formula}-slag`, kind: 'custom', ...rolled, target: null, outcome: '' }));
     }
 
     container.querySelectorAll('[data-dice-mode]').forEach((button) => button.addEventListener('click', () => {
       diceState().mode = button.dataset.diceMode;
+      lastEntry = null;
       app.saveState(button.dataset.diceMode === 'public' ? 'Offentliga slag valda' : 'Privata slag valda');
       render();
     }));
 
-    container.querySelectorAll('[data-quick-die]').forEach((button) => button.addEventListener('click', () => {
-      const sides = Number(button.dataset.quickDie);
-      const rolled = rollPool(1, sides, 0);
-      saveRoll(context, { label: `Slumpmässigt T${sides}-slag`, kind: 'custom', ...rolled, target: null, outcome: '' });
+    container.querySelectorAll('[data-resource-change]').forEach((button) => button.addEventListener('click', () => {
+      const resource = button.dataset.resourceChange;
+      const action = Number(button.dataset.resourceAction) || 0;
+      if (typeof context?.changeResource === 'function') context.changeResource(resource, action);
+      render();
     }));
 
-    container.querySelector('.dice-custom-form').addEventListener('submit', (event) => {
+    container.querySelectorAll('[data-resource-reset]').forEach((button) => button.addEventListener('click', () => {
+      if (typeof context?.changeResource === 'function') context.changeResource(button.dataset.resourceReset, 'reset');
+      render();
+    }));
+
+    container.querySelectorAll('[data-resource-edit]').forEach((button) => button.addEventListener('click', () => {
+      const resource = button.dataset.resourceEdit;
+      const combat = combatData();
+      const current = resource === 'hp' ? combat.hpCurrent : combat.wpCurrent;
+      const label = resource === 'hp' ? 'KP' : 'VP';
+      const entered = prompt(`Nytt värde för ${label}:`, String(current));
+      if (entered === null || entered.trim() === '') return;
+      const value = Number(entered);
+      if (!Number.isFinite(value)) return;
+      if (typeof context?.changeResource === 'function') context.changeResource(resource, { set: value });
+      render();
+    }));
+
+    container.querySelector('[data-roll-selected-skill]')?.addEventListener('click', () => {
+      const select = container.querySelector('[data-quick-skill]');
+      const skills = skillData();
+      const skill = skills[Number(select?.value)];
+      if (!skill) return app.showToast('Ingen färdighet vald');
+      controllerRollSkill(skill.name, skill.value, 'skill');
+    });
+
+    container.querySelector('[data-roll-weapon-attack]')?.addEventListener('click', () => {
+      const select = container.querySelector('[data-quick-weapon]');
+      const weapons = weaponData();
+      const weapon = weapons[Number(select?.value)];
+      if (!weapon) return app.showToast('Inget vapen valt');
+      controllerRollSkill(`${weapon.name} – attack`, weapon.target, 'weapon-attack');
+    });
+
+    container.querySelector('[data-roll-weapon-damage]')?.addEventListener('click', () => {
+      const select = container.querySelector('[data-quick-weapon]');
+      const weapons = weaponData();
+      const weapon = weapons[Number(select?.value)];
+      if (!weapon) return app.showToast('Inget vapen valt');
+      controllerRollFormula(`${weapon.name} – skada`, weapon.damage || 'T6', 'weapon-damage');
+    });
+
+    container.querySelectorAll('[data-quick-die]').forEach((button) => button.addEventListener('click', () => {
+      const sides = Number(button.dataset.quickDie);
+      controllerRollCustom(`Slumpmässigt T${sides}-slag`, 1, sides, 0);
+    }));
+
+    container.querySelector('.dice-custom-form')?.addEventListener('submit', (event) => {
       event.preventDefault();
       const form = event.currentTarget;
       const rolled = rollPool(form.elements.count.value, form.elements.sides.value, form.elements.modifier.value);
       const label = form.elements.label.value.trim() || `Slumpmässigt ${rolled.formula}-slag`;
-      saveRoll(context, { label, kind: 'custom', ...rolled, target: null, outcome: '' });
+      announce(saveRoll(context, { label, kind: 'custom', ...rolled, target: null, outcome: '' }));
     });
 
-    container.querySelector('[data-dice-room]').addEventListener('change', (event) => {
+    container.querySelector('[data-dice-room]')?.addEventListener('change', (event) => {
       const value = event.target.value.trim() || 'MUSTA-GRUPP-7Q4K9X2M';
       diceState().roomCode = value;
       app.saveState('Gruppkoden sparad');
@@ -486,7 +750,7 @@
       render();
     });
 
-    container.querySelector('[data-copy-room]').addEventListener('click', async () => {
+    container.querySelector('[data-copy-room]')?.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(diceState().roomCode);
         app.showToast('Gruppkoden kopierad');
@@ -495,12 +759,21 @@
       }
     });
 
-    container.querySelector('[data-clear-private]').addEventListener('click', () => {
+    container.querySelector('[data-clear-private]')?.addEventListener('click', () => {
       const key = entryContext(context).characterKey;
       if (!confirm('Rensa den privata tärningsloggen för den här karaktären?')) return;
       diceState().privateLogs[key] = [];
+      lastEntry = null;
       app.saveState('Privata slag rensade');
       render();
+    });
+
+    container.querySelector('[data-dice-expand]')?.addEventListener('click', (event) => {
+      const drawer = container.querySelector('[data-dice-drawer]');
+      const shouldOpen = drawer?.hidden ?? true;
+      if (drawer) drawer.hidden = !shouldOpen;
+      event.currentTarget.setAttribute('aria-expanded', String(shouldOpen));
+      event.currentTarget.textContent = shouldOpen ? 'Stäng' : 'Strid & slag';
     });
 
     const listener = () => render();
@@ -511,7 +784,12 @@
     return {
       rollSkill: controllerRollSkill,
       rollFormula: controllerRollFormula,
-      destroy() { listeners.delete(listener); }
+      rollCustom: controllerRollCustom,
+      refresh: render,
+      destroy() {
+        listeners.delete(listener);
+        if (dockMode) document.body.classList.remove('dice-dock-active');
+      }
     };
   }
 
