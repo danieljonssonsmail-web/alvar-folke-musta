@@ -209,6 +209,103 @@
     });
   }
 
+  function armorOptions(kind, selected) {
+    return Object.keys(app.armorCatalog[kind]).map((name) => `
+      <option value="${app.escapeHtml(name)}" ${name === selected ? 'selected' : ''}>${app.escapeHtml(name)}</option>
+    `).join('');
+  }
+
+  function protectionRows(armor) {
+    const types = [
+      ['normal', 'Normal fysisk skada'],
+      ['kross', 'Krosskada'],
+      ['hugg', 'Huggskada']
+    ];
+    return types.map(([key, label]) => {
+      const details = app.armorDetails(armor, key);
+      const bonus = details.typeBonus ? ` <small>(+${details.typeBonus} från rustningstyp)</small>` : '';
+      return `<div><span>${label}</span><strong>${details.effectiveProtection}</strong>${bonus}</div>`;
+    }).join('');
+  }
+
+  function renderArmor() {
+    const state = app.getState();
+    state.character.armor = app.normalizeArmor(state.character.armor);
+    const armor = state.character.armor;
+    const details = app.armorDetails(armor);
+    const bodyCustom = armor.body === 'Egen rustning';
+    const helmetCustom = armor.helmet === 'Egen hjälm';
+    const effects = details.effects.length
+      ? `<ul class="armor-effects">${details.effects.map((effect) => `<li>${app.escapeHtml(effect)}</li>`).join('')}</ul>`
+      : '<p class="muted">Inga särskilda nackdelar.</p>';
+
+    const container = document.getElementById('armor-fields');
+    container.innerHTML = `
+      <div class="armor-selector-grid">
+        <label class="field"><span>Rustning</span><select data-armor-select="body">${armorOptions('body', armor.body)}</select></label>
+        <label class="field"><span>Hjälm</span><select data-armor-select="helmet">${armorOptions('helmet', armor.helmet)}</select></label>
+      </div>
+
+      ${bodyCustom ? `
+        <div class="armor-custom-grid">
+          <label class="field"><span>Eget namn på rustningen</span><input type="text" value="${app.escapeHtml(armor.customBodyName)}" data-armor-field="customBodyName"></label>
+          <label class="field"><span>Skyddsvärde</span><input type="number" min="0" max="99" value="${armor.customBodyProtection}" data-armor-field="customBodyProtection"></label>
+          <label class="field full"><span>Effekt eller nackdel</span><input type="text" value="${app.escapeHtml(armor.customBodyEffect)}" data-armor-field="customBodyEffect"></label>
+        </div>
+      ` : ''}
+
+      ${helmetCustom ? `
+        <div class="armor-custom-grid">
+          <label class="field"><span>Eget namn på hjälmen</span><input type="text" value="${app.escapeHtml(armor.customHelmetName)}" data-armor-field="customHelmetName"></label>
+          <label class="field"><span>Extra skydd</span><input type="number" min="0" max="99" value="${armor.customHelmetProtection}" data-armor-field="customHelmetProtection"></label>
+          <label class="field full"><span>Effekt eller nackdel</span><input type="text" value="${app.escapeHtml(armor.customHelmetEffect)}" data-armor-field="customHelmetEffect"></label>
+        </div>
+      ` : ''}
+
+      <div class="armor-summary">
+        <div class="armor-score" aria-label="Sammanlagt skyddsvärde">
+          <span>Skydd</span>
+          <strong>${details.baseProtection}</strong>
+          <small>${app.escapeHtml(details.bodyName)}${armor.helmet !== 'Ingen' ? ` + ${app.escapeHtml(details.helmetName)}` : ''}</small>
+        </div>
+        <div>
+          <h3>Effekt</h3>
+          ${effects}
+        </div>
+      </div>
+
+      <div class="damage-protection-grid">
+        ${protectionRows(armor)}
+      </div>
+
+      <label class="field"><span>Egna rustningsanteckningar</span><textarea rows="3" data-armor-field="notes" placeholder="Skador på rustningen, särskilda egenskaper eller sådant spelledaren bestämt...">${app.escapeHtml(armor.notes)}</textarea></label>
+
+      <details class="armor-rules">
+        <summary>Rustningsregler vid bordet</summary>
+        <div class="armor-rule-grid">
+          <p><strong>Minska skadan:</strong> Dra av det sammanlagda skyddsvärdet från skadan från en fysisk attack.</p>
+          <p><strong>En rustning:</strong> Du kan bära en kroppsrustning åt gången och kombinera den med en hjälm.</p>
+          <p><strong>Byta utrustning:</strong> Att ta av eller på rustning eller hjälm räknas som en handling i strid.</p>
+          <p><strong>Bärförmåga:</strong> Rustning och hjälm som bärs på kroppen räknas inte mot bärförmågan.</p>
+          <p><strong>Helt stoppad närstridsskada:</strong> Om rustningen stoppar all skada från en närstridsattack tar vapnet i stället skadan och kan påverkas av sitt brytvärde.</p>
+          <p><strong>Frivilliga skadetyper:</strong> Läder och nitläder ger 2 extra skydd mot krosskada. Ringbrynja ger 2 extra skydd mot huggskada.</p>
+        </div>
+      </details>
+    `;
+
+    container.querySelectorAll('[data-armor-select]').forEach((select) => select.addEventListener('change', () => {
+      armor[select.dataset.armorSelect] = select.value;
+      app.saveState('Rustningen ändrad');
+      renderArmor();
+    }));
+    container.querySelectorAll('[data-armor-field]').forEach((input) => input.addEventListener('change', () => {
+      const key = input.dataset.armorField;
+      armor[key] = input.type === 'number' ? app.clamp(input.value, 0, 99) : input.value.trim();
+      app.saveState('Rustningen uppdaterad');
+      if (key !== 'notes') renderArmor();
+    }));
+  }
+
   function renderWeapons() {
     const state = app.getState();
     const tbody = document.getElementById('weapon-table');
@@ -227,16 +324,7 @@
       app.saveState();
     }));
 
-    const armor = state.character.armor;
-    document.getElementById('armor-fields').innerHTML = `
-      <label class="field"><span>Hjälm</span><input type="text" value="${app.escapeHtml(armor.helmet)}" data-armor="helmet"></label>
-      <label class="field"><span>Rustning</span><input type="text" value="${app.escapeHtml(armor.armor)}" data-armor="armor"></label>
-      <label class="field full"><span>Anteckningar och nackdelar</span><textarea data-armor="notes">${app.escapeHtml(armor.notes)}</textarea></label>
-    `;
-    document.querySelectorAll('[data-armor]').forEach((input) => input.addEventListener('change', () => {
-      armor[input.dataset.armor] = input.value;
-      app.saveState();
-    }));
+    renderArmor();
   }
 
   function bindSearch() {

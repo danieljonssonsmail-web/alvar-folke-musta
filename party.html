@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Medspelarnas karaktärer, bakgrunder och karaktärsblad för Drakar och Demoner.">
+  <title>Gruppen — Alvar Musta</title>
+  <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script defer src="assets/js/app.js"></script>
+  <script defer src="assets/js/party.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">AM</span>
+        <span><strong>Alvar Musta</strong><small>De flesta kallar honom Folke</small></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Öppna meny">Meny</button>
+      <nav class="site-nav" aria-label="Huvudmeny">
+        <a href="index.html">Översikt</a>
+        <a href="character.html">Karaktärsblad</a>
+        <a href="background.html">Bakgrund</a>
+        <a href="inventory.html">Inventory</a>
+        <a class="active" href="party.html">Gruppen</a>
+        <a href="journal.html">Journal</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <header class="page-head">
+      <p class="eyebrow">Medspelarna</p>
+      <h1>Gruppens karaktärer</h1>
+      <p class="lead">Lägg till medspelarnas bakgrunder och ladda upp deras karaktärsblad som PDF eller bild. Varje karaktär får en egen flik.</p>
+    </header>
+
+    <section class="section-tight">
+      <article class="notice-card">
+        <strong>Filerna sparas bara i den här webbläsaren.</strong>
+        <span>GitHub Pages kan inte skriva tillbaka till repositoryt. Exportera ett karaktärspaket för att flytta en flik till en annan dator eller telefon.</span>
+      </article>
+    </section>
+
+    <section class="section-tight">
+      <div class="party-toolbar no-print">
+        <div id="party-tabs" class="party-tabs" role="tablist" aria-label="Karaktärer"></div>
+        <div class="tools">
+          <label class="btn btn-ghost" for="party-package-import">Importera karaktärspaket</label>
+          <input id="party-package-import" type="file" accept="application/json,.json" hidden>
+          <button id="party-add-button" class="btn btn-secondary" type="button">+ Ny karaktär</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="party-empty" class="section-tight" hidden>
+      <div class="empty-state">
+        <h2>Ännu är Alvar ensam här</h2>
+        <p>Lägg till den första medspelaren eller importera ett karaktärspaket.</p>
+        <button class="btn btn-secondary" type="button" data-open-editor>Skapa första karaktärsfliken</button>
+      </div>
+    </section>
+
+    <section id="party-editor" class="section-tight no-print" hidden>
+      <article class="card">
+        <p class="eyebrow" id="party-editor-eyebrow">Ny medspelare</p>
+        <h2 id="party-editor-title">Skapa en karaktärsflik</h2>
+        <p class="small muted">Karaktärsbladet bifogas och visas i fliken. Fälten i PDF-filen läses inte automatiskt.</p>
+        <form id="party-form" class="form-grid" autocomplete="off">
+          <input name="id" type="hidden">
+          <label class="field"><span>Karaktärens namn</span><input name="name" type="text" required placeholder="Exempel: Yrsa Gråsten"></label>
+          <label class="field"><span>Kallas</span><input name="knownAs" type="text" placeholder="Smeknamn eller täcknamn"></label>
+          <label class="field"><span>Spelare</span><input name="player" type="text" placeholder="Spelarens namn"></label>
+          <label class="field"><span>Släkte</span><input name="kin" type="text" placeholder="Människa, kattfolk, halvlängdsfolk..."></label>
+          <label class="field"><span>Yrke</span><input name="profession" type="text" placeholder="Magiker, jägare, krigare..."></label>
+          <label class="field"><span>Ålder</span><input name="age" type="text" placeholder="Ung, medelålders..."></label>
+          <label class="field"><span>Arketyp</span><input name="archetype" type="text"></label>
+          <label class="field"><span>Svaghet</span><input name="weakness" type="text"></label>
+
+          <div class="full subsection-head compact">
+            <p class="eyebrow">Skydd</p>
+            <h3>Rustning och hjälm</h3>
+            <p class="small muted">Skyddsvärde och nackdelar räknas ut automatiskt och kan ändras senare direkt i karaktärsfliken.</p>
+          </div>
+          <label class="field"><span>Rustning</span><select name="armorBody" data-party-armor-editor="body"></select></label>
+          <label class="field"><span>Hjälm</span><select name="armorHelmet" data-party-armor-editor="helmet"></select></label>
+
+          <div id="party-custom-body" class="armor-custom-grid full" hidden>
+            <label class="field"><span>Eget namn på rustningen</span><input name="customBodyName" type="text"></label>
+            <label class="field"><span>Skyddsvärde</span><input name="customBodyProtection" type="number" min="0" max="99" value="0"></label>
+            <label class="field full"><span>Effekt eller nackdel</span><input name="customBodyEffect" type="text"></label>
+          </div>
+          <div id="party-custom-helmet" class="armor-custom-grid full" hidden>
+            <label class="field"><span>Eget namn på hjälmen</span><input name="customHelmetName" type="text"></label>
+            <label class="field"><span>Extra skydd</span><input name="customHelmetProtection" type="number" min="0" max="99" value="0"></label>
+            <label class="field full"><span>Effekt eller nackdel</span><input name="customHelmetEffect" type="text"></label>
+          </div>
+          <label class="field full"><span>Egna rustningsanteckningar</span><textarea name="armorNotes" rows="3" placeholder="Skador på rustningen, särskilda egenskaper eller egna regler..."></textarea></label>
+
+          <label class="field full"><span>Bakgrund</span><textarea name="background" rows="12" placeholder="Klistra in karaktärens bakgrund här..."></textarea></label>
+          <label class="field full"><span>Övriga anteckningar</span><textarea name="notes" rows="5" placeholder="Relationer, hemligheter, uttal, spelkrokar och sådant gruppen behöver minnas..."></textarea></label>
+
+          <div class="upload-grid full">
+            <label class="upload-box" for="party-sheet-file">
+              <strong>Karaktärsblad</strong>
+              <span>PDF, JPG, PNG eller WEBP</span>
+              <span id="party-sheet-name" class="upload-name">Ingen fil vald</span>
+              <input id="party-sheet-file" name="sheetFile" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" hidden>
+            </label>
+            <label class="upload-box" for="party-portrait-file">
+              <strong>Porträtt</strong>
+              <span>Valfri bild till karaktärsfliken</span>
+              <span id="party-portrait-name" class="upload-name">Ingen fil vald</span>
+              <input id="party-portrait-file" name="portraitFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            </label>
+          </div>
+
+          <details class="armor-rules full">
+            <summary>Visa rustningsregler</summary>
+            <div class="armor-rule-grid">
+              <p><strong>Skydd:</strong> Dra av skyddsvärdet från skadan från en fysisk attack.</p>
+              <p><strong>Kombination:</strong> En kroppsrustning kan kombineras med en hjälm.</p>
+              <p><strong>I strid:</strong> Att ta av eller på rustning eller hjälm är en handling.</p>
+              <p><strong>Frivilliga skadetyper:</strong> Läder och nitläder får +2 skydd mot kross. Ringbrynja får +2 mot hugg.</p>
+            </div>
+          </details>
+
+          <div class="full tools">
+            <button id="party-save" class="btn btn-secondary" type="submit">Skapa karaktärsflik</button>
+            <button id="party-cancel" class="btn btn-ghost" type="button">Avbryt</button>
+          </div>
+        </form>
+      </article>
+    </section>
+
+    <section id="party-character" class="section-tight" hidden>
+      <div id="party-character-content"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>Alvar Folke Musta · gruppens karaktärer</span>
+      <a href="journal.html">Fortsätt till kampanjjournalen →</a>
+    </div>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

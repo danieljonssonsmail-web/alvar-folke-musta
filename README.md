@@ -6,7 +6,9 @@ En färdig statisk GitHub Pages-sajt för karaktären **Alvar Musta**, oftast k�
 
 - digitalt och redigerbart karaktärsblad
 - grundegenskaper, färdigheter, förmågor, magi, vapen och tillstånd
+- valbar rustning och hjälm med automatiskt skyddsvärde, nackdelar och rustningsregler
 - inventory med obegränsat antal föremål, bärplatser och pengar
+- gruppsida där medspelarnas karaktärsblad, bakgrunder, porträtt och rustningar kan läggas till
 - kampanjjournal med datum, plats och etiketter
 - automatisk lagring i webbläsarens `localStorage`
 - export och import av all speldata som JSON
@@ -42,9 +44,14 @@ index.html              Översikt
 character.html          Karaktärsblad
 background.html         Bakgrund
 inventory.html          Inventory
+party.html              Gruppens karaktärer och rustningar
 journal.html            Journal
 assets/css/styles.css   Formgivning
 assets/js/              Funktioner och lokal lagring
 assets/images/          Bilder och ikon
 assets/docs/            Originalbladet som PDF
 ```
+
+## Rustningssystem
+
+På Alvars karaktärsblad och i varje medspelares karaktärsflik går det att välja kroppsrustning och hjälm. Sajten visar normalt skydd samt effektivt skydd mot kross- och huggskada när den frivilliga regeln för skadetyper används. Egna rustningar och hjälmar kan få valfritt namn, skyddsvärde och effekt.

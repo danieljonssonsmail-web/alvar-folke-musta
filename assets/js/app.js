@@ -3,8 +3,25 @@
 
   const STORAGE_KEY = 'alvarMustaCampaignV1';
 
+  const ARMOR_CATALOG = {
+    body: {
+      'Ingen': { protection: 0, effect: 'Ingen rustning och inga färdighetsnackdelar.', typeBonus: {} },
+      'Läder': { protection: 1, effect: 'Inga färdighetsnackdelar.', typeBonus: { kross: 2 } },
+      'Nitläder': { protection: 2, effect: 'Nackdel på slag mot SMYGA.', typeBonus: { kross: 2 } },
+      'Ringbrynja': { protection: 4, effect: 'Nackdel på slag mot UNDVIKA och SMYGA.', typeBonus: { hugg: 2 } },
+      'Plåtrustning': { protection: 6, effect: 'Nackdel på slag mot HOPPA & KLÄTTRA, UNDVIKA och SMYGA.', typeBonus: {} },
+      'Egen rustning': { protection: 0, effect: 'Använd det egna skyddsvärdet och den egna effekten.', typeBonus: {} }
+    },
+    helmet: {
+      'Ingen': { protection: 0, effect: 'Ingen hjälm och inga färdighetsnackdelar.' },
+      'Öppen hjälm': { protection: 1, effect: 'Nackdel på slag mot UPPTÄCKA FARA.' },
+      'Tunnhjälm': { protection: 2, effect: 'Nackdel på slag mot UPPTÄCKA FARA och avståndsattacker.' },
+      'Egen hjälm': { protection: 0, effect: 'Använd det egna skyddsvärdet och den egna effekten.' }
+    }
+  };
+
   const defaultState = {
-    version: 1,
+    version: 3,
     character: {
       name: 'Alvar Folke Musta',
       knownAs: 'Folke',
@@ -93,9 +110,15 @@
         { name: 'Långbåge', grip: '2h', range: '100', damage: 'T12', durability: '6', properties: 'Stickande, kräver koger' }
       ],
       armor: {
-        helmet: 'Läder',
-        armor: 'Läder',
-        notes: 'Nackdel på Smyga, Undvika samt Hoppa & klättra. Hjälmen ger nackdel på Upptäcka fara och avståndsattacker.'
+        body: 'Läder',
+        helmet: 'Ingen',
+        customBodyName: '',
+        customBodyProtection: 0,
+        customBodyEffect: '',
+        customHelmetName: '',
+        customHelmetProtection: 0,
+        customHelmetEffect: '',
+        notes: ''
       },
       memory: ''
     },
@@ -115,7 +138,8 @@
         { id: 'item-9', name: 'Hänglås', quantity: 1, category: 'Småsak', slots: 0, worn: false, notes: '' }
       ]
     },
-    journal: []
+    journal: [],
+    party: { characters: [] }
   };
 
   function clone(value) {
@@ -137,14 +161,90 @@
     return target;
   }
 
+  function validArmorChoice(kind, value) {
+    return Object.prototype.hasOwnProperty.call(ARMOR_CATALOG[kind], value);
+  }
+
+  function normalizeArmor(rawArmor) {
+    const source = rawArmor && typeof rawArmor === 'object' ? rawArmor : {};
+    let body = String(source.body || source.armor || 'Ingen');
+    let helmet = String(source.helmet || 'Ingen');
+
+    const normalized = {
+      body: validArmorChoice('body', body) ? body : 'Egen rustning',
+      helmet: validArmorChoice('helmet', helmet) ? helmet : 'Egen hjälm',
+      customBodyName: String(source.customBodyName || ''),
+      customBodyProtection: clamp(source.customBodyProtection, 0, 99),
+      customBodyEffect: String(source.customBodyEffect || ''),
+      customHelmetName: String(source.customHelmetName || ''),
+      customHelmetProtection: clamp(source.customHelmetProtection, 0, 99),
+      customHelmetEffect: String(source.customHelmetEffect || ''),
+      notes: String(source.notes || '')
+    };
+
+    if (!validArmorChoice('body', body)) normalized.customBodyName = normalized.customBodyName || body;
+    if (!validArmorChoice('helmet', helmet)) normalized.customHelmetName = normalized.customHelmetName || helmet;
+
+    // Tidiga versioner hade av misstag "Läder" i hjälmfältet.
+    if (helmet === 'Läder' && source.armor === 'Läder' && !source.customHelmetName) {
+      normalized.helmet = 'Ingen';
+      normalized.customHelmetName = '';
+    }
+    return normalized;
+  }
+
+  function armorDetails(rawArmor, damageType = 'normal') {
+    const armor = normalizeArmor(rawArmor);
+    const bodyBase = ARMOR_CATALOG.body[armor.body] || ARMOR_CATALOG.body['Egen rustning'];
+    const helmetBase = ARMOR_CATALOG.helmet[armor.helmet] || ARMOR_CATALOG.helmet['Egen hjälm'];
+    const bodyProtection = armor.body === 'Egen rustning' ? armor.customBodyProtection : bodyBase.protection;
+    const helmetProtection = armor.helmet === 'Egen hjälm' ? armor.customHelmetProtection : helmetBase.protection;
+    const typeBonus = Number(bodyBase.typeBonus?.[damageType] || 0);
+    const bodyName = armor.body === 'Egen rustning' ? (armor.customBodyName || 'Egen rustning') : armor.body;
+    const helmetName = armor.helmet === 'Egen hjälm' ? (armor.customHelmetName || 'Egen hjälm') : armor.helmet;
+    const effects = [];
+    const bodyEffect = armor.body === 'Egen rustning' ? armor.customBodyEffect : bodyBase.effect;
+    const helmetEffect = armor.helmet === 'Egen hjälm' ? armor.customHelmetEffect : helmetBase.effect;
+    if (armor.body !== 'Ingen' && bodyEffect) effects.push(`${bodyName}: ${bodyEffect}`);
+    if (armor.helmet !== 'Ingen' && helmetEffect) effects.push(`${helmetName}: ${helmetEffect}`);
+    if (armor.notes) effects.push(armor.notes);
+    return {
+      armor,
+      bodyName,
+      helmetName,
+      bodyProtection,
+      helmetProtection,
+      baseProtection: bodyProtection + helmetProtection,
+      typeBonus,
+      effectiveProtection: bodyProtection + helmetProtection + typeBonus,
+      effects
+    };
+  }
+
+  function normalizeState(nextState) {
+    if (!nextState || typeof nextState !== 'object') return nextState;
+    if (!nextState.character || typeof nextState.character !== 'object') nextState.character = {};
+    nextState.character.armor = normalizeArmor(nextState.character.armor);
+    if (!nextState.party || typeof nextState.party !== 'object') nextState.party = { characters: [] };
+    if (!Array.isArray(nextState.party.characters)) nextState.party.characters = [];
+    nextState.party.characters.forEach((character) => {
+      if (!character || typeof character !== 'object') return;
+      const sourceArmor = character.armor || character.sourceCharacter?.armor;
+      character.armor = normalizeArmor(sourceArmor);
+    });
+    nextState.version = Math.max(Number(nextState.version) || 0, 3);
+    return nextState;
+  }
+
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return clone(defaultState);
-      return mergeDeep(clone(defaultState), JSON.parse(raw));
+      if (!raw) return normalizeState(clone(defaultState));
+      const parsed = normalizeState(JSON.parse(raw));
+      return normalizeState(mergeDeep(clone(defaultState), parsed));
     } catch (error) {
       console.warn('Kunde inte läsa sparad data:', error);
-      return clone(defaultState);
+      return normalizeState(clone(defaultState));
     }
   }
 
@@ -164,13 +264,14 @@
   function getState() { return state; }
 
   function replaceState(nextState, message = 'Data importerad') {
-    state = mergeDeep(clone(defaultState), nextState || {});
+    const normalizedImport = normalizeState(clone(nextState || {}));
+    state = normalizeState(mergeDeep(clone(defaultState), normalizedImport));
     saveState(message);
     window.dispatchEvent(new CustomEvent('alvar-state-changed'));
   }
 
   function resetState() {
-    state = clone(defaultState);
+    state = normalizeState(clone(defaultState));
     saveState('Allt återställt');
     window.dispatchEvent(new CustomEvent('alvar-state-changed'));
   }
@@ -253,6 +354,9 @@
     makeId,
     clamp,
     escapeHtml,
+    armorCatalog: clone(ARMOR_CATALOG),
+    normalizeArmor,
+    armorDetails,
     defaultState: clone(defaultState)
   };
 
